@@ -1,4 +1,3 @@
-import libs
 import numpy as np
 # from Basis import Basis
 # from Mesh import Mesh 

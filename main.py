@@ -39,7 +39,7 @@ N_x=10  #Number of elements in the Galerkin discretization.
 dgr=1   #Degree of the piecewise polynomial basis. 
 
 # For the chaos Galerkin expansion:
-N =8	#Number of basis elements in the chaos Expansion.  
+N =4	#Number of basis elements in the chaos Expansion.  
 #Number of Quadrature Points
 Number_Of_Quadrature_Points=7
 #----------------------------------------------------------------------------------------------------------------------------
