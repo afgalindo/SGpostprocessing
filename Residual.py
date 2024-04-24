@@ -76,7 +76,9 @@ class Residual:
                         sum_flux=0.0
                         for n in range(self.k+1): 
                             sum_flux+=u[i+1][n]*self.basis.basis_at(m,1.0)*self.basis.basis_at(n,-1.0)-u[i][n]*self.basis.basis_at(m,-1.0)*self.basis.basis_at(n,-1.0) 
-                        dLu[i][m]+=self.advection_coefficient*sum_flux                    
+                        dLu[i][m]+=self.advection_coefficient*sum_flux
+
+        dLu*=2.0/self.dx                                                
         return dLu
 
     
