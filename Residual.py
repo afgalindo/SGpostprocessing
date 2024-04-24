@@ -8,15 +8,13 @@ from Quadrature import Quadrature
 
 # Create class called Residual. The basis and mesh are parameters for the class. Methods: compute Q, compute coefficients
 class Residual:
-    def __init__(self, advection_coefficient,mesh, basis, quadrature): # Note that N_quad WILL NOT be used
+    def __init__(self,mesh, basis, quadrature): # Note that N_quad WILL NOT be used
         # Instances of the differente classes. 
-        self.advection_coefficient=advection_coefficient
         self.mesh=mesh
         self.basis=basis
         self.quadrature=quadrature
         self.N_elements=mesh.N_x  #Accesing Number of elements from the mesh instance.
         self.dx=mesh.dx           #Accesing element size
-        self.x=mesh.x             #Accesing array x with center points of the elements
         self.k=basis.degree       #Accesing polynomial degree of the piecewise basis from the Basis instance
         self.Number_Of_Quad_Points=quadrature.N_quad
         self.gp, self.wp=quadrature.return_quadrature()
@@ -37,7 +35,7 @@ class Residual:
 
         return Projected_f # return the solution matrix C
     
-    def Compute_Residual(self,u):
+    def Compute_Residual(self,advection_coefficient,u):
         dLu=np.zeros((self.N_elements,self.k))
         for i in range(self.N_elements):
             for m in range(self.k+1):
@@ -53,7 +51,7 @@ class Residual:
 
                 #Here comes the flux remember that this only for the periodic case, for other cases I may have to do and extra if.
                 #Upwind flux
-                if self.advection_coefficient>=0:
+                if advection_coefficient>=0:
                     if i==0:
                         sum_flux=0.0
                         #Periodic boundary condition applies here!

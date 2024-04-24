@@ -1,12 +1,16 @@
+#Here I will solve for the coefficients. using Discontinuois Galerkin method
 import numpy as np
-from scipy.special import legendre
 import math 
+from Mesh import Mesh
+from Basis import Basis
 from Quadrature import Quadrature
+from ChaosExpansion import ChaosExpansion
+from DGSolver import DGSolver
 
 #This will hold the int, right, and left bases. The parameter of this basis is the degree of the polynomial.
 #For now we will just define it for the uniform distribution in the interval [-1,1]
 #i.e Normalized Legendre Polynomials. 
-class ChaosExpansion:
+class SGSolver:
     def __init__(self, Probability_Density, Random_Coefficient,Initial_Data,Number_of_Random_Basis,Number_Of_Quadrature_Points):
         self.rho=Probability_Density            #Probability density.
         self.c= Random_Coefficient              #Randon Coefficient. 
@@ -23,7 +27,7 @@ class ChaosExpansion:
         self.initialize_Diagonalization()
         
     #Basis element of degree k (Normalized Legendre polynomials)
-    def chaos_basis_element(self,degree, x):
+    def basis_element(self,degree, x):
         normalization_constant=math.sqrt(1.0/(2.0*degree+1.0))
         return legendre(degree)(x)/normalization_constant
     # Initialize the coefficients quadrature using a Gauss quadrature in the interval [-1,1]
@@ -35,7 +39,7 @@ class ChaosExpansion:
                 for point in range(self.Number_Of_Quadrature_Points):
                     yy=self.gp[point]
                     ww=self.wp[point]
-                    integral+=self.c(yy)*self.chaos_basis_element(m,yy)*self.chaos_basis_element(n,yy)*self.rho(yy)*ww
+                    integral+=self.c(yy)*self.basis_element(m,yy)*self.basis_element(n,yy)*self.rho(yy)*ww
                 A[m][n]=integral
         
         self.Lambda, self.S=np.linalg.eig(A)
@@ -52,7 +56,7 @@ class ChaosExpansion:
             for point in range(self.Number_Of_Quadrature_Points):
                 yy=self.gp[point]
                 ww=self.wp[point]
-                coefficient+=function(xx,yy)*self.chaos_basis_element(m,yy)*self.rho(yy)*ww
+                coefficient+=function(xx,yy)*self.basis_element(m,yy)*self.rho(yy)*ww
             v_initial[m]=coefficient 
 
         return v_initial 

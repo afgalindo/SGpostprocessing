@@ -3,44 +3,41 @@ from Basis import Basis
 from Mesh import Mesh 
 from Residual import Residual
 
-class DGSolve:
-    def __init__(self, advection_coefficient, mesh, basis,quadrature,initial_condition, T):
-        self.advection_coefficient=advection_coefficient
+class DGSolver:
+    def __init__(self,mesh, basis,quadrature,T):
         self.mesh=mesh
         self.basis=basis
         self.quadrature=quadrature                      
-        self.initial_condition = initial_condition      #Initial condition.
-        self.T = T                                      #Final time. 
-        self.residual=Residual(advection_coefficient,mesh, basis,quadrature)
-        # Define parameters
-        self.u = self.residual.L2_projection(self.initial_condition) # initialize a solution vector via L2 projection of the initial data.
-        self.current_time = 0.0                         #Keeps track of time evolution.
-
-
-    def compute_dt(self):
+        self.residual=Residual(mesh, basis,quadrature)
+        # Define parameter
+    #Computes dt in each time step.
+    def compute_dt(self,current_time, T):
         c = 0.01  #CFL constant
         dt = c * self.mesh.dx # define delta_t
-        if self.current_time + dt > self.T:
+        if current_time + dt > T:
             dt = self.T - self.current_time
         return dt
 
-    def compute_RK(self, dt): # runge-kutta
+    def compute_RK(self, advection_coefficient,u, dt): # runge-kutta
         u1 = np.zeros((self.mesh.N_x, self.basis.k+1))
         u2 = np.zeros((self.mesh.N_x, self.basis.k+1))
         u_next = np.zeros((self.mesh.N_x, self.basis.k+1))
 
-        u1 =self.u + dt * self.evaluate_residual(self.u)
-        u2 = 0.75*self.u + 0.25*u1 + 0.25*dt*self.evaluate_residual(u1)
-        u_next = (1.0/3.0)*self.u + (2.0/3.0)*u2 + (2.0/3.0)*dt*self.evaluate_residual(u2)
-        self.u = u_next # update the U matrix
+        u1 =self.u + dt * self.evaluate_residual(advection_coefficient,u)
+        u2 = 0.75*u + 0.25*u1 + 0.25*dt*self.evaluate_residual(advection_coefficient,u1)
+        u_next = (1.0/3.0)*u + (2.0/3.0)*u2 + (2.0/3.0)*dt*self.evaluate_residual(advection_coefficient,u2)
+        u = u_next # update the U matrix
 
-    def compute_solution(self):
+    def compute_dg_solution(self,advection_coefficient,initial_condition,T):
+        current_time=0.0
+        u = self.residual.L2_projection(initial_condition) # initialize a solution vector via L2 projection of the initial data.
         # compute delta_t and runge kutta
-        while self.current_time < self.T:
-            dt = self.compute_dt()
-            self.compute_RK(dt)
-            self.current_time += dt
-            
+        while current_time <T:
+            dt = self.compute_dt(current_time,T)
+            self.compute_RK(advection_coefficient,u,dt)
+            current_time += dt
+
+        return u    
 
 
 
