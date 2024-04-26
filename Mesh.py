@@ -6,7 +6,7 @@ class Mesh:
         self.N_x = Number_of_Elements_x # Number of elements in the physical space x
         self.dx = ((self.R - self.L)/self.N_x)
         self.x = np.zeros((self.N_x))
-        self.construct_x_i() # construct the x_i array
+        self.construct_x() # construct the x_i array
         
     # construct the array x, contains the center points of the cells.
     def construct_x(self):
