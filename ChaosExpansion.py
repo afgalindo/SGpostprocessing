@@ -18,8 +18,8 @@ class ChaosExpansion:
         
     #Basis element of degree k (Normalized Legendre polynomials)
     def chaos_basis_element(self,degree, x):
-        normalization_constant=math.sqrt(1.0/(2.0*degree+1.0))
-        return legendre(degree)(x)/normalization_constant
+        normalization_constant=math.sqrt(2.0*degree+1.0)
+        return legendre(degree)(x)*normalization_constant
     # Initialize the coefficients quadrature using a Gauss quadrature in the interval [-1,1]
     def initialize_Diagonalization(self,Random_Coefficient):
         A=np.zeros((self.N+1, self.N+1))
@@ -34,19 +34,19 @@ class ChaosExpansion:
         
         Lambda, S=np.linalg.eig(A)
         S_inv=np.linalg.inv(S)
+        print(S_inv)
         return S, S_inv, Lambda
     # Have to create here a method that given the coefficients of the chaos expansion, reconstructs the solution.
     # The coefficients depend on x.
     def Chaos_Galerkin_Projection(self, function,xx):
         projected_f=np.zeros((self.N+1))
         for m in range(self.N+1):
-            coefficient=0.0
+            projected_f[m]=0.0
             #Computes expected value of v_initial*P_m
             for point in range(self.Number_Of_Quadrature_Points):
                 yy=self.gp[point]
                 ww=self.wp[point]
-                coefficient+=function(xx,yy)*self.chaos_basis_element(m,yy)*self.rho(yy)*ww
-            projected_f[m]=coefficient
+                projected_f[m]+=function(xx, yy)* self.chaos_basis_element(m,yy) * self.rho(yy) * ww
 
         return projected_f
 

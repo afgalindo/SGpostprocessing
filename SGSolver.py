@@ -1,6 +1,7 @@
 #Here I will solve for the coefficients. using Discontinuois Galerkin method
 import numpy as np
 import math 
+import matplotlib.pyplot as plt
 from Mesh import Mesh
 from Basis import Basis
 from Quadrature import Quadrature
@@ -17,7 +18,8 @@ class SGSolver:
         self.N_x=self.dg.N_x                    #Number of elements in the physical space x.
         self.k=self.dg.k                        #Degree of piecewise polynomial degree basis.
         #-----------
-        self.T=T                                #Simulation final time
+        self.T=T                                #Simulation final time.
+        self.current_time=0.0                   #Current time in the simulation.
         #Polynomial chaos objects
         self.chaos=chaos                        #Chaos expansion handler
         self.N_Chaos=self.chaos.N       #Number of elements in the chaos expansion. 
@@ -30,6 +32,9 @@ class SGSolver:
         self.S_inv = np.zeros((self.N_Chaos+1, self.N_Chaos+1))  #Matrix S of the diagonalization SDS^(-1)=A with the coefficients of the system of PDE's dv/dt=A*dv/dx.
         self.D=np.zeros((self.N_Chaos+1))               #Array with the eigenvalues of the diagonilazation.
         self.Set_PDE()   
+        #For plotting purposes:
+        self.t=[]
+        self.mean_square=[]
 #Set up the PDE for the coefficients by creating S, and D.
     def Set_PDE(self):
         self.S, self.S_inv, self.D=self.chaos.initialize_Diagonalization(self.c)
@@ -43,12 +48,41 @@ class SGSolver:
         v_initial=self.chaos.Chaos_Galerkin_Projection(self.initial_data,xx)
         q_entry=0.0
         for n in range(self.N_Chaos):
-            value+=self.S_inv[entry][n]*v_initial[n]
+            q_entry+=self.S_inv[entry][n]*v_initial[n]
         return q_entry
     
 #  Solver given initial data and T
     def Solve_SG(self):
-        for entry in range(self.N_Chaos):
-            initial_condition_entry_fixed = lambda xx: self.Initial_Condition(entry, xx)   
-            self.Chaos_Coefficients[entry]=self.dg.compute_dg_solution(self.D[entry],initial_condition_entry_fixed,self.T)
+        #initialize the problem.
+        square=0.0
+        for entry in range(self.N_Chaos+1):
+            initial_condition_entry_fixed = lambda xx: self.Initial_Condition(entry, xx) 
+            # initialize a solution vector via L2 projection of the initial data.
+            test=self.dg.residual.L2_projection(initial_condition_entry_fixed)
+            self.Chaos_Coefficients[entry]= self.dg.residual.L2_projection(initial_condition_entry_fixed)
+    
+            x_mesh, y_test=self.dg.output(test,10)
+            plt.plot(x_mesh,y_test,color='red', label='approximated')
+
+            #Computes L2-norm of Chaos_Coefficients[m]
+            square+=self.dg.Compute_L2_norm(self.Chaos_Coefficients[entry])
+        #---------------------------------------------------------------------------------------------------
+        self.t.append(self.current_time)
+        self.mean_square.append(square)
+        #print(self.mean_square)
+        #Compute the mean-square here. 
+        #Time evolution. And computing the mean square norm.
+        while self.current_time <self.T:
+            square=0.0
+            dt = self.dg.compute_dt(self.current_time,self.T)
+            for entry in range(self.N_Chaos+1):
+                self.Chaos_Coefficients[entry]=self.dg.compute_RK(self.D[entry],self.Chaos_Coefficients[entry], dt)
+                square+=self.dg.Compute_L2_norm(self.Chaos_Coefficients[entry])
+                self.current_time+=dt
+            #------------mean_square_calculations
+            self.t.append(self.current_time)
+            self.mean_square.append(square)
+    #--------------------------------------------------------------------
+    def Output(self):
+        return self.t, self.mean_square
 #Create a lambda function!!!
