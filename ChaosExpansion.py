@@ -34,7 +34,6 @@ class ChaosExpansion:
         
         Lambda, S=np.linalg.eig(A)
         S_inv=np.linalg.inv(S)
-        print(S_inv)
         return S, S_inv, Lambda
     # Have to create here a method that given the coefficients of the chaos expansion, reconstructs the solution.
     # The coefficients depend on x.

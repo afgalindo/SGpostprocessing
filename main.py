@@ -22,8 +22,22 @@ def c(y):
 #Define problem initial data.
 def initial_condition(x,y):
      return np.cos(x) #This initial data corresponds to periodic problem. See reference 
-def testing(x,t):
-     return np.cos(x+0.5*t)
+def pollo(x,t):
+     if t==0:
+          value=np.abs(np.cos(x))
+     else:     
+          value=0.5+0.125*(np.sin(2*x+2*t)-np.sin(2*x-2*t))/t
+     return value
+
+def testing(t):
+     x=np.linspace(0.0,2.0*np.pi,100)
+     max=-np.inf
+     for x_point in x:
+          holi=pollo(x_point,t)
+          if(holi>=max):
+               max=holi
+
+     return max
 # #Defini real_solution:
 # def real_solution(x,alpha,t):
 #      return initial_condition(x+alpha*t)
@@ -49,37 +63,38 @@ N_x=100  #Number of elements in the Galerkin discretization.
 dgr=1   #Degree of the piecewise polynomial basis. 
 
 # For the chaos Galerkin expansion:
-N =0	#Number of basis elements in the chaos Expansion.  
+N =4	#Number of basis elements in the chaos Expansion.  
 #Number of Quadrature Points
 Number_Of_Quadrature_Points=4
 #----------------------------------------------------------------------------------------------------------------------------
 
 def main():
-     T=0.0#np.pi
-     basis=Basis(dgr)
-     mesh=Mesh(N_x,x_left,x_right)
-     quadrature=Quadrature(Number_Of_Quadrature_Points)
-     residual=Residual(mesh,basis,quadrature)
-     dg_solve=DGSolver(mesh,basis,quadrature)
-     chaos=ChaosExpansion(rho,N,Number_Of_Quadrature_Points)
-     sg=SGSolver(dg_solve,chaos,c,initial_condition,T)
+     T=50.0
+     #basis=Basis(dgr)
+     #mesh=Mesh(N_x,x_left,x_right)
+     #quadrature=Quadrature(Number_Of_Quadrature_Points)
+     #dg_solve=DGSolver(mesh,basis,quadrature)
+     #chaos=ChaosExpansion(rho,N,Number_Of_Quadrature_Points)
+     #sg=SGSolver(dg_solve,chaos,c,initial_condition,T)
 
-     sg.Solve_SG() 
+     #sg.Solve_SG() 
      #--------------------------------------------------------
-    
-     test = sg.Chaos_Coefficients[0] 
-     #print(test)
-     #y_test=[]
-    # x_mesh, y_values=dg_solve.output(test,10)
-     
-     #for xx in x_mesh:
-     #     y_test.append(testing(xx,T))
-     #t, mean_square=sg.Output()   
-     #plt.plot(t,mean_square) 
-     #plt.plot(t, mean_square, color = "magenta", label = "Real Solution") # plug x into the function
-     #plt.plot(x_mesh,y_values,color='red', label='approximated')
-     #plt.plot(x_mesh,y_test,color='green', label='label')
+
+     #time, mean_square=sg.Output()     
+     time=np.linspace(0.0,T,200)
+     mean_square=[]
+     for t in time:
+          mean_square.append(testing(t))
+     plt.plot(time, mean_square)#, label='0th Entry of Chaos Galerkin Projection', color='blue')
+     plt.xlabel('t')
+     plt.ylabel('mean square $E$')
+     plt.title('Mean-square evolution')
+     #plt.legend()
+     plt.grid(True)
      plt.show()
+     #print(mean_square)
+     
+
      
 if __name__ == "__main__":
     main()

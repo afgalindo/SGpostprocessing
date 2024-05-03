@@ -1,12 +1,12 @@
 #Here I will solve for the coefficients. using Discontinuois Galerkin method
 import numpy as np
 import math 
-import matplotlib.pyplot as plt
 from Mesh import Mesh
 from Basis import Basis
 from Quadrature import Quadrature
 from ChaosExpansion import ChaosExpansion
 from DGSolver import DGSolver
+
 
 #This will hold the int, right, and left bases. The parameter of this basis is the degree of the polynomial.
 #For now we will just define it for the uniform distribution in the interval [-1,1]
@@ -54,16 +54,11 @@ class SGSolver:
 #  Solver given initial data and T
     def Solve_SG(self):
         #initialize the problem.
-        square=0.0
+        square=0.0        
         for entry in range(self.N_Chaos+1):
-            initial_condition_entry_fixed = lambda xx: self.Initial_Condition(entry, xx) 
-            # initialize a solution vector via L2 projection of the initial data.
-            test=self.dg.residual.L2_projection(initial_condition_entry_fixed)
+            initial_condition_entry_fixed = lambda xx, entry=entry: self.Initial_Condition(entry, xx)
+        # initialize a solution vector via L2 projection of the initial data.
             self.Chaos_Coefficients[entry]= self.dg.residual.L2_projection(initial_condition_entry_fixed)
-    
-            x_mesh, y_test=self.dg.output(test,10)
-            plt.plot(x_mesh,y_test,color='red', label='approximated')
-
             #Computes L2-norm of Chaos_Coefficients[m]
             square+=self.dg.Compute_L2_norm(self.Chaos_Coefficients[entry])
         #---------------------------------------------------------------------------------------------------
