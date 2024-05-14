@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.special import legendre
 import math 
 from Quadrature import Quadrature
 
@@ -19,18 +18,23 @@ class ChaosExpansion:
     #Basis element of degree k (Normalized Legendre polynomials)
     def chaos_basis_element(self,degree, x):
         normalization_constant=math.sqrt(2.0*degree+1.0)
-        return legendre(degree)(x)*normalization_constant
+        sum=0.0
+        for i in range(degree+1):
+            sum+= (math.comb(degree,i)**2)*((x-1.0)**(degree-i))*((x+1.0)**i)
+        sum=sum/(2.0**degree)
+        sum=sum*normalization_constant
+        
+        return sum
     # Initialize the coefficients quadrature using a Gauss quadrature in the interval [-1,1]
     def initialize_Diagonalization(self,Random_Coefficient):
         A=np.zeros((self.N+1, self.N+1))
         for m in range(self.N+1):
             for n in range(self.N+1): 
-                integral=0.0
                 for point in range(self.Number_Of_Quadrature_Points):
                     yy=self.gp[point]
                     ww=self.wp[point]
-                    integral+=Random_Coefficient(yy)*self.chaos_basis_element(m,yy)*self.chaos_basis_element(n,yy)*self.rho(yy)*ww
-                A[m][n]=integral
+                    A[m][n]+=Random_Coefficient(yy)*self.chaos_basis_element(m,yy)*self.chaos_basis_element(n,yy)*self.rho(yy)*ww
+                print(f"Entry at ({m}, {n}): {A[m, n]}")
         
         Lambda, S=np.linalg.eig(A)
         S_inv=np.linalg.inv(S)

@@ -4,6 +4,7 @@ from Mesh import Mesh
 from Quadrature import Quadrature
 from Residual import Residual
 
+
 class DGSolver:
     def __init__(self,mesh, basis,quadrature):
         self.mesh=mesh
@@ -15,7 +16,7 @@ class DGSolver:
         # Define parameter
     #Computes dt in each time step.
     def compute_dt(self,current_time, T):
-       cfl = 0.01  #CFL constant
+       cfl = 0.1  #CFL constant
        dt = cfl * self.mesh.dx # define delta_t
        if current_time + dt > T:
            dt = T - current_time
@@ -68,6 +69,38 @@ class DGSolver:
                 L2_norm+=(self.evaluate(u[i],self.quadrature.g[point])**2)*self.quadrature.w[point]	    
         L2_norm*=0.5*self.mesh.dx        
         return L2_norm
+
+    #Evaluates the norm of the coefficients in a cell entry and point x
+    def sum_of_squares_eval(self,List,entry,xx):
+        value=0.0
+        for coefficient in List:
+            value+=self.evaluate(coefficient[entry],xx)**2
+        return value
+    #Computes the maximum value of the sum of squares over in the cell entry
+    def Compute_mean_square_max_at(self,entry,List):
+        lim=20 #Number of points where the function will be evaluted in the cell.
+        points=np.zeros(lim+1)
+        max_square=-np.inf
+        for j in range(lim+1):
+            points[j] = -1.0 + 2.0*j/lim
+
+        for j in range(lim+1):
+            value=self.sum_of_squares_eval(List,entry,points[j])
+            if(value>max_square):
+                max_square=value
+
+        return max_square
+    
+    #Computes the maximum value of the squares in the whole physical space.
+    def Compute_mean_square_max_norm(self,List):
+        total_max=-np.inf
+        partial_max=0.0 
+        for i in range(self.N_x):
+            partial_max=self.Compute_mean_square_max_at(i,List)
+            if(partial_max>total_max):
+                total_max=partial_max
+    
+        return total_max
         
 
 

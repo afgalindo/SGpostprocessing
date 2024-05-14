@@ -6,6 +6,7 @@ from Basis import Basis
 from Quadrature import Quadrature
 from ChaosExpansion import ChaosExpansion
 from DGSolver import DGSolver
+import matplotlib.pyplot as plt
 
 
 #This will hold the int, right, and left bases. The parameter of this basis is the degree of the polynomial.
@@ -35,6 +36,7 @@ class SGSolver:
         #For plotting purposes:
         self.t=[]
         self.mean_square=[]
+        self.mean_max=[]
 #Set up the PDE for the coefficients by creating S, and D.
     def Set_PDE(self):
         self.S, self.S_inv, self.D=self.chaos.initialize_Diagonalization(self.c)
@@ -54,30 +56,49 @@ class SGSolver:
 #  Solver given initial data and T
     def Solve_SG(self):
         #initialize the problem.
-        square=0.0        
+        #square=0.0        
+        max=0.0
         for entry in range(self.N_Chaos+1):
             initial_condition_entry_fixed = lambda xx, entry=entry: self.Initial_Condition(entry, xx)
-        # initialize a solution vector via L2 projection of the initial data.
+            # initialize a solution vector via L2 projection of the initial data.
             self.Chaos_Coefficients[entry]= self.dg.residual.L2_projection(initial_condition_entry_fixed)
+            #x,soln=self.dg.output(self.Chaos_Coefficients[entry],10)
+            #plt.plot(x, soln, label=f'entry {entry}')         
             #Computes L2-norm of Chaos_Coefficients[m]
-            square+=self.dg.Compute_L2_norm(self.Chaos_Coefficients[entry])
-        #---------------------------------------------------------------------------------------------------
+            #square+=self.dg.Compute_L2_norm(self.Chaos_Coefficients[entry])
+        
+
+        max=self.dg.Compute_mean_square_max_norm(self.Chaos_Coefficients)    
+        # #---------------------------------------------------------------------------------------------------
         self.t.append(self.current_time)
-        self.mean_square.append(square)
-        #print(self.mean_square)
-        #Compute the mean-square here. 
-        #Time evolution. And computing the mean square norm.
+        # #self.mean_square.append(square) 
+        self.mean_max.append(max)
+        # #Time evolution. And computing the mean square norm.
         while self.current_time <self.T:
-            square=0.0
+            #square=0.0
+            max=0.0
             dt = self.dg.compute_dt(self.current_time,self.T)
             for entry in range(self.N_Chaos+1):
                 self.Chaos_Coefficients[entry]=self.dg.compute_RK(self.D[entry],self.Chaos_Coefficients[entry], dt)
-                square+=self.dg.Compute_L2_norm(self.Chaos_Coefficients[entry])
-                self.current_time+=dt
-            #------------mean_square_calculations
+                #square+=self.dg.Compute_L2_norm(self.Chaos_Coefficients[entry])
+            self.current_time+=dt
+        #     #------------mean_max_calculations
+            max=self.dg.Compute_mean_square_max_norm(self.Chaos_Coefficients)
             self.t.append(self.current_time)
-            self.mean_square.append(square)
+            self.mean_max.append(max)
+
+        #for entry in range(self.N_Chaos+1):
+            # x,soln=self.dg.output(self.Chaos_Coefficients[entry],10)
+           #  plt.plot(x, soln, label=f'entry {entry}')  
+        
+        #real_sol=[]
+        #for xx in x:
+          #  real_sol.append(math.cos(xx+self.T))
+        
+        #plt.plot(x, real_sol, label='Real')  
+
+
     #--------------------------------------------------------------------
     def Output(self):
-        return self.t, self.mean_square
+        return self.t, self.mean_max
 #Create a lambda function!!!
