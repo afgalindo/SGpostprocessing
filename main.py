@@ -62,7 +62,7 @@ def rho(y): #uniform distribution in \Omega=(-1.0,1.0)
 # Discontinuous Galerkin method will be used to compute the coefficients(via solving a transport equation) of the chaos expansion. 
 # For phyisical 
 N_x=100  #Number of elements in the Galerkin discretization.
-dgr=1   #Degree of the piecewise polynomial basis. 
+dgr=2   #Degree of the piecewise polynomial basis. 
 
 # For the chaos Galerkin expansion:
 N=12	#Number of basis elements in the chaos Expansion.  
