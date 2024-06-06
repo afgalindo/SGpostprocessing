@@ -67,12 +67,12 @@ class SGSolver:
             #Computes L2-norm of Chaos_Coefficients[m]
             #square+=self.dg.Compute_L2_norm(self.Chaos_Coefficients[entry])
         
-
-        max=self.dg.Compute_mean_square_max_norm(self.Chaos_Coefficients)    
+        #     #------------mean_max_calculations
+        #max=self.dg.Compute_mean_square_max_norm(self.Chaos_Coefficients)    
         # #---------------------------------------------------------------------------------------------------
-        self.t.append(self.current_time)
+        #self.t.append(self.current_time)
         # #self.mean_square.append(square) 
-        self.mean_max.append(max)
+        #self.mean_max.append(max)
         # #Time evolution. And computing the mean square norm.
         while self.current_time <self.T:
             #square=0.0
@@ -83,9 +83,9 @@ class SGSolver:
                 #square+=self.dg.Compute_L2_norm(self.Chaos_Coefficients[entry])
             self.current_time+=dt
         #     #------------mean_max_calculations
-            max=self.dg.Compute_mean_square_max_norm(self.Chaos_Coefficients)
-            self.t.append(self.current_time)
-            self.mean_max.append(max)
+        #    max=self.dg.Compute_mean_square_max_norm(self.Chaos_Coefficients)
+        #    self.t.append(self.current_time)
+        #    self.mean_max.append(max)
 
         #for entry in range(self.N_Chaos+1):
             # x,soln=self.dg.output(self.Chaos_Coefficients[entry],10)
