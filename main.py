@@ -5,7 +5,12 @@
 #-----------------------------------------------------------------------------------------------------------------------------
 import numpy as np #import libraries that will be used
 import math 
+#############
+#  Plotting #
+#############
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+#############
 from Basis import Basis
 from Mesh import Mesh 
 from DGSolver import DGSolver
@@ -13,8 +18,10 @@ from Quadrature import Quadrature
 from ChaosExpansion import ChaosExpansion
 from Residual import Residual
 from SGSolver import SGSolver
+from Output import Output
+#from SIAC import SIAC
 
-#
+
 #Define random transport velocity 
 def c(y):
      return y #This data corresponds to periodic problem. See reference 
@@ -24,6 +31,10 @@ def test_dg(x):
 #Define problem initial data.
 def initial_condition(x,y):
      return np.cos(x) #This initial data corresponds to periodic problem. See reference 
+#############################
+def real_solution(x,y,t):
+     return np.cos(x+y*t)
+#############################
 def pollo(x,t):
      if t==0:
           value=np.abs(np.cos(x))
@@ -65,13 +76,13 @@ N_x=100  #Number of elements in the Galerkin discretization.
 dgr=2   #Degree of the piecewise polynomial basis. 
 
 # For the chaos Galerkin expansion:
-N=4	#Number of basis elements in the chaos Expansion.  
+N=6	#Number of basis elements in the chaos Expansion.  
 Number_Of_Quadrature_Points=3 #Quadrature points in physical space.
 Number_Of_Quadrature_Points_Random=14 #Quadrature points in random space.
 #----------------------------------------------------------------------------------------------------------------------------
 
 def main():
-     T=50.0
+     T=0.0
      basis=Basis(dgr)
      mesh=Mesh(N_x,x_left,x_right)
      quadrature=Quadrature(Number_Of_Quadrature_Points)
@@ -80,38 +91,10 @@ def main():
      chaos=ChaosExpansion(rho,N,Number_Of_Quadrature_Points_Random)
      sg=SGSolver(dg_solve,chaos,c,initial_condition,T)
      sg.Solve_SG() 
-     ##--------------------------------------------------------
-     #Testing the chaos expansion. 
-     # pollo=chaos.Chaos_Galerkin_Projection(initial_condition,math.pi)
-     # print(pollo)
-     ##--------------------------------------------------------
-     time, mean_max=sg.Output()     
-     mean_square=[]
-     # # for t in time:
-     # #      mean_square.append(testing(t))
-     plt.plot(time, mean_max, label='N=8', color='blue')
-     for t in time:
-          mean_square.append(testing(t))
-     plt.plot(time, mean_square, label='Exact', color='red')     
-     plt.xlabel('t')
-     plt.ylabel('mean square $E$')
-     plt.title('Mean-square evolution')
-     plt.legend()
-     plt.grid(True)
-     plt.show()
-     #print(mean_square)
-
-     # DG TEST!!!
-     # u=np.zeros((N_x,dgr+1))
-     # advection=1.0
-     # Current_Time=0.0
-     # u=residual.L2_projection(test_dg) #This looks correct.
-     
-     # while Current_Time<T:
-     #      dt=dg_solve.compute_dt(Current_Time,T)
-     #      dg_solve.compute_RK(advection,u,dt)
-     #      Current_Time+=dt
-
+     output=Output(sg,chaos,basis,mesh)
+     ################################################################
+     coeff=sg.Chaos_Coefficients
+     output.output_file(coeff)
      # xx,soln=dg_solve.output(u,10)
      # real_sln=[]
      # for x in xx:

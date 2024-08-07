@@ -6,7 +6,6 @@ from Basis import Basis
 from Quadrature import Quadrature
 from ChaosExpansion import ChaosExpansion
 from DGSolver import DGSolver
-import matplotlib.pyplot as plt
 
 
 #This will hold the int, right, and left bases. The parameter of this basis is the degree of the polynomial.
@@ -98,7 +97,5 @@ class SGSolver:
         #plt.plot(x, real_sol, label='Real')  
 
 
-    #--------------------------------------------------------------------
-    def Output(self):
-        return self.t, self.mean_max
-#Create a lambda function!!!
+
+    

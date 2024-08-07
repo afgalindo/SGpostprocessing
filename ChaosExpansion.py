@@ -34,7 +34,7 @@ class ChaosExpansion:
                     yy=self.gp[point]
                     ww=self.wp[point]
                     A[m][n]+=Random_Coefficient(yy)*self.chaos_basis_element(m,yy)*self.chaos_basis_element(n,yy)*self.rho(yy)*ww
-                print(f"Entry at ({m}, {n}): {A[m, n]}")
+                #print(f"Entry at ({m}, {n}): {A[m, n]}")
         
         Lambda, S=np.linalg.eig(A)
         S_inv=np.linalg.inv(S)
