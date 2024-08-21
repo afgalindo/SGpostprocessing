@@ -73,10 +73,10 @@ def rho(y): #uniform distribution in \Omega=(-1.0,1.0)
 # Discontinuous Galerkin method will be used to compute the coefficients(via solving a transport equation) of the chaos expansion. 
 # For phyisical 
 N_x=100  #Number of elements in the Galerkin discretization.
-dgr=2   #Degree of the piecewise polynomial basis. 
+dgr=1   #Degree of the piecewise polynomial basis. 
 
 # For the chaos Galerkin expansion:
-N=10	#Number of basis elements in the chaos Expansion.  
+N=9	#Number of basis elements in the chaos Expansion.  
 Number_Of_Quadrature_Points=3 #Quadrature points in physical space.
 Number_Of_Quadrature_Points_Random=14 #Quadrature points in random space.
 #----------------------------------------------------------------------------------------------------------------------------
@@ -94,23 +94,10 @@ def main():
      output=Output(sg,chaos,basis,mesh)
      ################################################################
      coeff=sg.Chaos_Coefficients
-     #output.output_file(coeff)
-     #output.plot_from_file()    # Plot the data
-     output.output_coefficients(coeff)
-     
-     # xx,soln=dg_solve.output(u,10)
-     # real_sln=[]
-     # for x in xx:
-     #      real_sln.append(test_dg(x+advection*T))
+     output.output_file(coeff)
+     output.plot_from_file()    # Plot the data
+     #output.output_coefficients(coeff)
 
-     # plt.plot(xx,real_sln, label='exact', color='blue')
-     # plt.plot(xx,soln,label='Approximated',color='red')
-     # plt.xlabel('x')
-     # plt.ylabel('u(x)')
-     # # plt.title('Mean-square evolution')
-     # plt.legend()
-     # plt.grid(True)
-     # plt.show()
 
 if __name__ == "__main__":
     main()

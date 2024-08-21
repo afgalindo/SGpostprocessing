@@ -2,6 +2,7 @@ import numpy as np
 import math 
 import os #Package to handle output 
 import matplotlib.pyplot as plt
+import matplotlib.tri as mtri
 from mpl_toolkits.mplot3d import Axes3D  # Import Axes3D for 3D plotting
 from Mesh import Mesh
 from Basis import Basis
@@ -39,15 +40,19 @@ class Output:
 # of the chaos expansion.                                   #
 #############################################################
     def output_file(self,chaos_coeff,lim_x=10,lim_y=100): # take in list of coefficients U
-        points_x = np.linspace(self.mesh.L,self.mesh.R,lim_x) #points where we are evaluating in each cell in x.
+        points_x = np.linspace(-1.0,1.0,lim_x) #points where we are evaluating in each cell in x.
         points_y = np.linspace(-1.0,1.0,lim_y) #points where we are evaluating in y\in (-1,1).
         
         # Define the filename
         filename = 'before.txt'
-
+        filename_two= 'cut.txt'
         # Check if the file already exists and delete it
         if os.path.isfile(filename):
             os.remove(filename)
+            print("deleted")
+        
+        if os.path.isfile(filename_two):
+            os.remove(filename_two)
             print("deleted")
         # Open a file to write the output
         with open(filename, 'w') as f:
@@ -70,43 +75,72 @@ class Output:
 
                         # Write xx, y, and value to the file
                         error=np.cos(xx+y)-value
-                        f.write(f"{xx}, {y}, {error}\n")
+                        #error=np.cos(xx+y)
+                        f.write(f"{xx} {y} {error}\n")
         
+        with open(filename_two, 'w') as f:
+            xx=np.pi
+            i=51        
+            for y in points_y:
+                value=0.0
+                q=np.zeros((self.N_Chaos+1))
+                v=np.zeros((self.N_Chaos+1))
+                for k in range(self.N_Chaos):
+                    q[k]=self.evaluate(chaos_coeff[k][i],xx)
+                            
+                v=np.dot(self.S,q)
+                
+                for k in range(self.N_Chaos+1):
+                    value+=v[k]*self.chaos.chaos_basis_element(k, y)
+
+                # Write xx, y, and value to the file
+                error=value
+                #error=np.cos(xx+y)-value
+                f.write(f" {y} {error}\n")
+
+
     def plot_from_file(self):
         # Define the filename
         filename = 'before.txt'
-        
-        # Check if the file exists
-        if not os.path.isfile(filename):
-            print("File not found:", filename)
-            return
+        filename_two = 'cut.txt'
+        # Load data directly into NumPy arrays
+        data = np.loadtxt(filename)
+        Xp2, Yp2, Zp2 = data[:, 0], data[:, 1], data[:, 2]
 
-        # Read data from the file
-        data = np.loadtxt(filename, delimiter=',')
-        xx = data[:, 0]
-        y = data[:, 1]
-        value = data[:, 2]
+        # Create a triangulation object
+        tri = mtri.Triangulation(Xp2, Yp2)
 
-        value_real = np.cos(xx+y)
-        # Create a 3D plot
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        # Create the figure and 3D axes
+        fig = plt.figure(figsize=(16, 9))
+        ax = plt.axes(projection='3d')
 
-        # Scatter plot
-        scatter_approx = ax.scatter(xx, y, value, c=value, cmap='viridis', label='Approximate')
-        #scatter_real = ax.scatter(xx, y, value_real, c='red', label='Real')
+        # Create the triangular surface plot
+        trisurf = ax.plot_trisurf(Xp2, Yp2, Zp2, triangles=tri.triangles, cmap=plt.cm.jet, antialiased=True)
 
-        # Set labels and title
-        ax.set_xlabel('xx')
-        ax.set_ylabel('y')
-        ax.set_zlabel('Value')
-        ax.set_title('Scatter Plot from before.txt')
+        # Add a color bar 
+        colorbar = fig.colorbar(trisurf, ax=ax, shrink=0.5, aspect=5)
+        colorbar.ax.tick_params(labelsize=14)  # Set the font size of the color bar
 
-        # Add legends
-        ax.legend()
+        # Adding axis labels
+        ax.set_xlabel('X', fontweight='bold')
+        ax.set_ylabel('Y', fontweight='bold')  # Changed from 'V' to 'Y' for consistency
+        ax.set_zlabel('Error', fontweight='bold')
 
-        # Show plot
-        plt.show()
+        # Show or save the plot
+        #plt.savefig('error.png')  # Uncomment if you want to save the figure
+        #plt.show()
+
+
+        T, Y = [], []
+        for line in open('cut.txt', 'r'):
+            values = [float(s) for s in line.split()]
+            T.append(values[0])
+            Y.append(values[1])
+
+        plt.figure(figsize=(8,8))
+        plt.plot(T, Y)
+        plt.savefig('wtf_cut.png')
+
 
     #######################################################
     # Transforms a given matrix into a vector             #
