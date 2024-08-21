@@ -76,13 +76,13 @@ N_x=100  #Number of elements in the Galerkin discretization.
 dgr=2   #Degree of the piecewise polynomial basis. 
 
 # For the chaos Galerkin expansion:
-N=6	#Number of basis elements in the chaos Expansion.  
+N=10	#Number of basis elements in the chaos Expansion.  
 Number_Of_Quadrature_Points=3 #Quadrature points in physical space.
 Number_Of_Quadrature_Points_Random=14 #Quadrature points in random space.
 #----------------------------------------------------------------------------------------------------------------------------
 
 def main():
-     T=0.0
+     T=1.0
      basis=Basis(dgr)
      mesh=Mesh(N_x,x_left,x_right)
      quadrature=Quadrature(Number_Of_Quadrature_Points)
@@ -94,7 +94,10 @@ def main():
      output=Output(sg,chaos,basis,mesh)
      ################################################################
      coeff=sg.Chaos_Coefficients
-     output.output_file(coeff)
+     #output.output_file(coeff)
+     #output.plot_from_file()    # Plot the data
+     output.output_coefficients(coeff)
+     
      # xx,soln=dg_solve.output(u,10)
      # real_sln=[]
      # for x in xx:
