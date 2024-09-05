@@ -19,6 +19,7 @@ from ChaosExpansion import ChaosExpansion
 from Residual import Residual
 from SGSolver import SGSolver
 from Output import Output
+from Postprocessing import Postprocessing
 #from SIAC import SIAC
 
 
@@ -27,7 +28,7 @@ def c(y):
      return y #This data corresponds to periodic problem. See reference 
 
 def test_dg(x):
-     return math.cos(x)
+     return np.sin(x) #math.cos(x)
 #Define problem initial data.
 def initial_condition(x,y):
      return np.cos(x) #This initial data corresponds to periodic problem. See reference 
@@ -72,32 +73,46 @@ def rho(y): #uniform distribution in \Omega=(-1.0,1.0)
 # Define discretization parameters. 
 # Discontinuous Galerkin method will be used to compute the coefficients(via solving a transport equation) of the chaos expansion. 
 # For phyisical 
-N_x=100  #Number of elements in the Galerkin discretization.
-dgr=1   #Degree of the piecewise polynomial basis. 
+N_x=20  #Number of elements in the Galerkin discretization.
+dgr=2   #Degree of the piecewise polynomial basis. 
 
 # For the chaos Galerkin expansion:
-N=9	#Number of basis elements in the chaos Expansion.  
+N=8	#Number of basis elements in the chaos Expansion.  
 Number_Of_Quadrature_Points=3 #Quadrature points in physical space.
-Number_Of_Quadrature_Points_Random=14 #Quadrature points in random space.
+Number_Of_Quadrature_Points_Random=8 #Quadrature points in random space.
 #----------------------------------------------------------------------------------------------------------------------------
 
 def main():
      T=1.0
+     eval_points=6 #Number of evaluation points for post-processing,ss
      basis=Basis(dgr)
      mesh=Mesh(N_x,x_left,x_right)
      quadrature=Quadrature(Number_Of_Quadrature_Points)
      #residual=Residual(mesh,basis,quadrature)
+     pp=Postprocessing(basis,mesh,eval_points)
      dg_solve=DGSolver(mesh,basis,quadrature)
-     chaos=ChaosExpansion(rho,N,Number_Of_Quadrature_Points_Random)
-     sg=SGSolver(dg_solve,chaos,c,initial_condition,T)
-     sg.Solve_SG() 
-     output=Output(sg,chaos,basis,mesh)
+     # chaos=ChaosExpansion(rho,N,Number_Of_Quadrature_Points_Random)
+     # sg=SGSolver(dg_solve,chaos,c,initial_condition,T)
+     # sg.Solve_SG() 
+     # output=Output(sg,chaos,basis,mesh)
      ################################################################
-     coeff=sg.Chaos_Coefficients
-     output.output_file(coeff)
-     output.plot_from_file()    # Plot the data
+     # coeff=sg.Chaos_Coefficients
+     # output.output_file(coeff)
+     # output.plot_from_file()    # Plot the data
      #output.output_coefficients(coeff)
-
+      #Postprocessing test here:
+     f=dg_solve.compute_dg_solution()
+     x,sol=dg_solve.output(f,eval_points)
+     real_sol=np.sin(x)
+     error_dg=real_sol-sol
+     plt.plot(x,error_dg,color='red')
+     xx,PPf=pp.postprocess_solution(f)
+     xxp=xx.ravel()
+     PPfp=PPf.ravel()
+     realest=np.sin(xxp)
+     error=realest-PPfp
+     plt.plot(xxp,error,color='blue')
+     plt.show()
 
 if __name__ == "__main__":
     main()

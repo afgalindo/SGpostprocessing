@@ -33,12 +33,12 @@ class DGSolver:
         return u
         
     # def compute_dg_solution(self,u,advection_coefficient,T):
-    #     current_time=0.0
-    #     while current_time <T:
-    #         dt = self.compute_dt(current_time,T)
-    #         self.compute_RK(advection_coefficient,u,dt)
-    #         current_time += dt
-    #     return u    
+    #      current_time=0.0
+    #      while current_time <T:
+    #          dt = self.compute_dt(current_time,T)
+    #          self.compute_RK(advection_coefficient,u,dt)
+    #          current_time += dt
+    #      return u    
     
     #Functions below for testing purpouses
     def evaluate(self, arr, xx): # this will calculate the summation of the (array * x^p) where degree p

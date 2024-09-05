@@ -45,7 +45,8 @@ class Output:
         
         # Define the filename
         filename = 'before.txt'
-        filename_two= 'cut.txt'
+        filename_two= 'cut_fixed_x.txt'
+        filename_three='cut_fixed_y.txt'
         # Check if the file already exists and delete it
         if os.path.isfile(filename):
             os.remove(filename)
@@ -53,6 +54,10 @@ class Output:
         
         if os.path.isfile(filename_two):
             os.remove(filename_two)
+            print("deleted")
+        
+        if os.path.isfile(filename_three):
+            os.remove(filename_three)
             print("deleted")
         # Open a file to write the output
         with open(filename, 'w') as f:
@@ -65,7 +70,7 @@ class Output:
                         q=np.zeros((self.N_Chaos+1))
                         v=np.zeros((self.N_Chaos+1))
                         for k in range(self.N_Chaos):
-                            q[k]=self.evaluate(chaos_coeff[k][i],xx)
+                            q[k]=self.evaluate(chaos_coeff[k][i],points_x[kx])
                             
                         
                         v=np.dot(self.S,q)
@@ -74,19 +79,20 @@ class Output:
                             value+=v[k]*self.chaos.chaos_basis_element(k, y)
 
                         # Write xx, y, and value to the file
-                        error=np.cos(xx+y)-value
+                        error=value
+                        #error=value
                         #error=np.cos(xx+y)
                         f.write(f"{xx} {y} {error}\n")
         
         with open(filename_two, 'w') as f:
             xx=np.pi
-            i=51        
+            i=50        
             for y in points_y:
                 value=0.0
                 q=np.zeros((self.N_Chaos+1))
                 v=np.zeros((self.N_Chaos+1))
                 for k in range(self.N_Chaos):
-                    q[k]=self.evaluate(chaos_coeff[k][i],xx)
+                    q[k]=self.evaluate(chaos_coeff[k][i],-1.0)
                             
                 v=np.dot(self.S,q)
                 
@@ -94,15 +100,38 @@ class Output:
                     value+=v[k]*self.chaos.chaos_basis_element(k, y)
 
                 # Write xx, y, and value to the file
-                error=value
-                #error=np.cos(xx+y)-value
+                #error=value
+                error=np.cos(xx+y)-value
                 f.write(f" {y} {error}\n")
 
+        # Open a file to write the output
+        with open(filename_three, 'w') as f:
+            
+            y=0.5
+            for i in range(self.mesh.N_x):
+                for kx in range(lim_x):
+                    xx=self.mesh.x[i] + 0.5*self.mesh.dx*points_x[kx] #Compute x coordinate
+                    value=0.0
+                    q=np.zeros((self.N_Chaos+1))
+                    v=np.zeros((self.N_Chaos+1))
+                    for k in range(self.N_Chaos):
+                        q[k]=self.evaluate(chaos_coeff[k][i],points_x[kx])
+                        v=np.dot(self.S,q)
+
+                    for k in range(self.N_Chaos+1):
+                        value+=v[k]*self.chaos.chaos_basis_element(k, y)
+
+                    # Write xx, y, and value to the file
+                    error=np.cos(xx+y)-value
+                    #error=value
+                    #error=np.cos(xx+y)
+                    f.write(f"{xx} {error}\n")
 
     def plot_from_file(self):
         # Define the filename
         filename = 'before.txt'
-        filename_two = 'cut.txt'
+        filename_two = 'cut_fixed_x.txt'
+        filename_three='cut_fixed_y.txt'
         # Load data directly into NumPy arrays
         data = np.loadtxt(filename)
         Xp2, Yp2, Zp2 = data[:, 0], data[:, 1], data[:, 2]
@@ -127,7 +156,7 @@ class Output:
         ax.set_zlabel('Error', fontweight='bold')
 
         # Show or save the plot
-        #plt.savefig('error.png')  # Uncomment if you want to save the figure
+        plt.savefig('approx_surface.png')  # Uncomment if you want to save the figure
         #plt.show()
 
 
@@ -139,7 +168,17 @@ class Output:
 
         plt.figure(figsize=(8,8))
         plt.plot(T, Y)
-        plt.savefig('wtf_cut.png')
+        plt.savefig('approx_cut.png')
+
+        T, Y = [], []
+        for line in open(filename_three, 'r'):
+            values = [float(s) for s in line.split()]
+            T.append(values[0])
+            Y.append(values[1])
+
+        plt.figure(figsize=(8,8))
+        plt.plot(T, Y)
+        plt.savefig('error_cut_fixed_y.png')
 
 
     #######################################################
