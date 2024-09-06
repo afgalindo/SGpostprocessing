@@ -17,6 +17,13 @@ class Postprocessing:
         self.x_grid= self.mesh.x                # Mesh center nodes.
         self.p=self.basis.degree                #Degree of piecewise polynomial degree basis.
         self.eval_points=eval_points            #Number of evaluation points in each cell.
+        #####################################################################################
+        # Get quadrature points and weights for the evaluation points                       #
+        # This lines compute the Gauss-Legendre quadrature nodes (zEval) and weights (wEval)#
+        #####################################################################################
+        self.zEval = np.zeros((self.eval_points))
+        self.wEval = np.zeros((self.eval_points))
+        self.zEval, self.wEval = np.polynomial.legendre.leggauss(self.eval_points)
     #METHODS
     #######################################################################                                                                                            
     #  evaluate the kernel:
@@ -211,17 +218,6 @@ class Postprocessing:
     def postprocess_solution(self,dg_solution):
         
         PPfApprox = np.zeros((self.N_x, self.eval_points))
-        #####################################################################################
-        # Get quadrature points and weights for the evaluation points                       #
-        # This lines compute the Gauss-Legendre quadrature nodes (zEval) and weights (wEval)#
-        #####################################################################################
-        zEval = np.zeros((self.eval_points))
-        wEval = np.zeros((self.eval_points))
-        zEval, wEval = np.polynomial.legendre.leggauss(self.eval_points)
-        ###############################################################
-        xglobal = np.zeros((self.N_x,self.eval_points))
-        for i in range(self.N_x):
-            xglobal[i,:] = self.x_grid[i] + 0.5*self.dx*zEval[:]
         #################################################################
         #Evaluate the Legendre polynomials at the evaluation points     #
         #################################################################
@@ -230,9 +226,9 @@ class Postprocessing:
             if i==0:
                 LegPolyAtzEval[i][:] = 1.0
             elif i ==1:
-                LegPolyAtzEval[i][:] = zEval
+                LegPolyAtzEval[i][:] = self.zEval
         else:
-            LegPolyAtzEval[i][:] = (2*i-1)/i*zEval[:]*LegPolyAtzEval[i-1][:]-(i-1)/i*LegPolyAtzEval[i-2][:]
+            LegPolyAtzEval[i][:] = (2*i-1)/i*self.zEval[:]*LegPolyAtzEval[i-1][:]-(i-1)/i*LegPolyAtzEval[i-2][:]
        
         #####################################################################
 
@@ -262,7 +258,7 @@ class Postprocessing:
         #print('kwide=',kwide,'    ksup=',ksup,'\n')
 
         #symcc is the symmetric post-processing matrix
-        symcc = self.symmetricpp_OhNo(ell,RS,zEval)
+        symcc = self.symmetricpp_OhNo(ell,RS,self.zEval)
 
         PPfApprox=np.zeros((self.N_x,self.eval_points))
     
@@ -301,4 +297,12 @@ class Postprocessing:
             PPfApprox[nel,:] = upost[:]
 
 
-        return xglobal,PPfApprox
+        return PPfApprox
+
+    def pp_grid(self):
+        ###############################################################
+        xglobal = np.zeros((self.N_x,self.eval_points))
+        for i in range(self.N_x):
+            xglobal[i,:] = self.x_grid[i] + 0.5*self.dx*self.zEval[:]
+
+        return xglobal

@@ -10,6 +10,11 @@ import math
 #############
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.tri as mtri
+##################
+# File maging    #
+##################
+import os #Package to handle output 
 #############
 from Basis import Basis
 from Mesh import Mesh 
@@ -91,28 +96,100 @@ def main():
      #residual=Residual(mesh,basis,quadrature)
      pp=Postprocessing(basis,mesh,eval_points)
      dg_solve=DGSolver(mesh,basis,quadrature)
-     # chaos=ChaosExpansion(rho,N,Number_Of_Quadrature_Points_Random)
-     # sg=SGSolver(dg_solve,chaos,c,initial_condition,T)
-     # sg.Solve_SG() 
+     chaos=ChaosExpansion(rho,N,Number_Of_Quadrature_Points_Random)
+     sg=SGSolver(dg_solve,chaos,c,initial_condition,T)
+     sg.Solve_SG() 
+     coeff=sg.Chaos_Coefficients
+     
+     #Post=processed values
+     x=pp.pp_grid()
+     PP_q=[]
+     #First post-process
+     for k in range(N+1):
+          postprocessed=pp.postprocess_solution(coeff[k])
+          PP_q.append(postprocessed)
+
+     y = np.linspace(-1.0,1.0,10) #points where we are evaluating in y\in (-1,1).
+     # Define the filename
+     filename = 'PP_solution.txt'
+     # Check if the file already exists and delete it
+     if os.path.isfile(filename):
+          os.remove(filename)
+          print("deleted")
+              
+     # Open a file to write the output
+     with open(filename, 'w') as f:
+          
+          for i in range(N_x):
+               for ep in range(eval_points):
+                    #Construct the value in a eval_point ep in cell i of q
+                    q_eval=np.zeros((N+1))
+                    v_eval=np.zeros((N+1))
+                    for k in range(N+1):
+                         q_eval[k]=PP_q[k][i][ep]
+                         
+                    #Reconstruct the value at that point 
+                    v_eval=np.dot(sg.S,q_eval)
+               
+                    for yy in y:
+                         value=0.0
+                         for k in range((N+1)):
+                              value+=v_eval[k]*chaos.chaos_basis_element(k,yy)
+                         xx=x[i][ep]
+                         error=np.cos(xx+yy)-value
+
+                         f.write(f"{xx} {yy} {error}\n")
+
+     # Load data directly into NumPy arrays
+     data = np.loadtxt(filename)
+     Xp2, Yp2, Zp2 = data[:, 0], data[:, 1], data[:, 2]
+
+     # Create a triangulation object
+     tri = mtri.Triangulation(Xp2, Yp2)
+
+     # Create the figure and 3D axes
+     fig = plt.figure(figsize=(16, 9))
+     ax = plt.axes(projection='3d')
+
+     # Create the triangular surface plot
+     trisurf = ax.plot_trisurf(Xp2, Yp2, Zp2, triangles=tri.triangles, cmap=plt.cm.jet, antialiased=True)
+
+     # Add a color bar 
+     colorbar = fig.colorbar(trisurf, ax=ax, shrink=0.5, aspect=5)
+     colorbar.ax.tick_params(labelsize=14)  # Set the font size of the color bar
+
+     # Adding axis labels
+     ax.set_xlabel('X', fontweight='bold')
+     ax.set_ylabel('Y', fontweight='bold')  # Changed from 'V' to 'Y' for consistency
+     ax.set_zlabel('Error', fontweight='bold')
+
+     # Show or save the plot
+     plt.savefig('pp_error_surface.png')  # Uncomment if you want to save the figure
+     #plt.show()
+     #Here we will plot the cuts. 
+     #First a cut on x around pi....
+     xx=x[9][5]
+     print(xx)
+
      # output=Output(sg,chaos,basis,mesh)
      ################################################################
      # coeff=sg.Chaos_Coefficients
      # output.output_file(coeff)
      # output.plot_from_file()    # Plot the data
      #output.output_coefficients(coeff)
-      #Postprocessing test here:
-     f=dg_solve.compute_dg_solution()
-     x,sol=dg_solve.output(f,eval_points)
-     real_sol=np.sin(x)
-     error_dg=real_sol-sol
-     plt.plot(x,error_dg,color='red')
-     xx,PPf=pp.postprocess_solution(f)
-     xxp=xx.ravel()
-     PPfp=PPf.ravel()
-     realest=np.sin(xxp)
-     error=realest-PPfp
-     plt.plot(xxp,error,color='blue')
-     plt.show()
+     #  #Postprocessing test here:
+     #f=dg_solve.compute_dg_solution()
+     #x,sol=dg_solve.output(f,eval_points)
+     # real_sol=np.sin(x)
+     # error_dg=real_sol-sol
+     # plt.plot(x,error_dg,color='red')
+     # xx,PPf=pp.postprocess_solution(f)
+     # xxp=xx.ravel()
+     # PPfp=PPf.ravel()
+     # realest=np.sin(xxp)
+     # error=realest-PPfp
+     # plt.plot(xxp,error,color='blue')
+     # plt.show()
 
 if __name__ == "__main__":
     main()
