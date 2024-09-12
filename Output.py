@@ -14,7 +14,7 @@ from SGSolver import SGSolver
 #This will produce output. For Plotting. Will receive the DG coeffcients
 #of the chaos expansion coefficients. 
 class Output:
-    def __init__(self,sg,chaos,basis,mesh):
+    def __init__(self,sg,chaos,basis,mesh,exact_solution,T):
         #DG objects
         self.sg=sg                              #Stochastic Galerkin solver.
         self.chaos=chaos
@@ -27,7 +27,9 @@ class Output:
         self.chaos=chaos                        #Chaos expansion handler
         self.N_Chaos=self.chaos.N       #Number of elements in the chaos expansion. 
         self.S = self.sg.S  #Matrix S of the diagonalization SDS^(-1)=A with the coefficients of the system of PDE's dv/dt=A*dv/dx.
-
+        #______________
+        self.exact_solution=exact_solution
+        self.T = T
 #Functions below for testing purpouses
     def evaluate(self, arr, xx): # this will calculate the summation of the (array * x^p) where degree p
         pol_sum = 0.0
@@ -39,14 +41,14 @@ class Output:
 # chaos_coeff, is a list that contains the DG coefficients  #
 # of the chaos expansion.                                   #
 #############################################################
-    def output_file(self,chaos_coeff,lim_x=10,lim_y=100): # take in list of coefficients U
+    def output_file(self,chaos_coeff,xx_cut, yy_cut,lim_x=10,lim_y=100): # take in list of coefficients U
         points_x = np.linspace(-1.0,1.0,lim_x) #points where we are evaluating in each cell in x.
         points_y = np.linspace(-1.0,1.0,lim_y) #points where we are evaluating in y\in (-1,1).
         
         # Define the filename
-        filename = 'before.txt'
-        filename_two= 'cut_fixed_x.txt'
-        filename_three='cut_fixed_y.txt'
+        filename = 'surface.txt'
+        filename_two= 'bpp_cut_fixed_x_{xx_cut}.txt'
+        filename_three='bpp_cut_fixed_y_{yy_cut}.txt'
         # Check if the file already exists and delete it
         if os.path.isfile(filename):
             os.remove(filename)
@@ -79,9 +81,9 @@ class Output:
                             value+=v[k]*self.chaos.chaos_basis_element(k, y)
 
                         # Write xx, y, and value to the file
-                        error=value
                         #error=value
-                        #error=np.cos(xx+y)
+                        #error=value
+                        error=self.exact_solution(xx,y,self.T)-value
                         f.write(f"{xx} {y} {error}\n")
         
         with open(filename_two, 'w') as f:
