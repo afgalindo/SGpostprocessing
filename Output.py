@@ -18,6 +18,7 @@ class Output:
         #DG objects
         self.sg=sg                              #Stochastic Galerkin solver.
         self.chaos=chaos
+        self.sg=sg
         self.basis=basis                        #basis function.
         self.mesh=mesh                          #mesh class
         self.N_x=self.mesh.N_x                  #Number of elements in the physical space x.
@@ -41,14 +42,19 @@ class Output:
 # chaos_coeff, is a list that contains the DG coefficients  #
 # of the chaos expansion.                                   #
 #############################################################
-    def output_file(self,chaos_coeff,xx_cut, yy_cut,lim_x=10,lim_y=100): # take in list of coefficients U
+    def output(self,xx_cut,i_cut,yy_cut):
+        chaos_coeff = self.sg.Chaos_Coefficients
+        self.output_file(self,chaos_coeff,xx_cut,i_cut, yy_cut)
+        self.plot_from_file(xx_cut,yy_cut)
+
+    def output_file(self,chaos_coeff,xx_cut,i_cut, yy_cut,lim_x=10,lim_y=100): # take in list of coefficients U
         points_x = np.linspace(-1.0,1.0,lim_x) #points where we are evaluating in each cell in x.
         points_y = np.linspace(-1.0,1.0,lim_y) #points where we are evaluating in y\in (-1,1).
         
         # Define the filename
         filename = 'surface.txt'
-        filename_two= 'bpp_cut_fixed_x_{xx_cut}.txt'
-        filename_three='bpp_cut_fixed_y_{yy_cut}.txt'
+        filename_two= f'bpp_cut_fixed_x_{xx_cut}.txt'
+        filename_three=f'bpp_cut_fixed_y_{yy_cut}.txt'
         # Check if the file already exists and delete it
         if os.path.isfile(filename):
             os.remove(filename)
@@ -87,14 +93,14 @@ class Output:
                         f.write(f"{xx} {y} {error}\n")
         
         with open(filename_two, 'w') as f:
-            xx=np.pi
-            i=50        
+            #xx=np.pi
+            #i=50        
             for y in points_y:
                 value=0.0
                 q=np.zeros((self.N_Chaos+1))
                 v=np.zeros((self.N_Chaos+1))
                 for k in range(self.N_Chaos):
-                    q[k]=self.evaluate(chaos_coeff[k][i],-1.0)
+                    q[k]=self.evaluate(chaos_coeff[k][i_cut],-1.0)
                             
                 v=np.dot(self.S,q)
                 
@@ -103,13 +109,13 @@ class Output:
 
                 # Write xx, y, and value to the file
                 #error=value
-                error=np.cos(xx+y)-value
+                error=self.exact_solution(xx_cut,y,self.T)-value
                 f.write(f" {y} {error}\n")
 
         # Open a file to write the output
         with open(filename_three, 'w') as f:
             
-            y=0.5
+            #y=0.5
             for i in range(self.mesh.N_x):
                 for kx in range(lim_x):
                     xx=self.mesh.x[i] + 0.5*self.mesh.dx*points_x[kx] #Compute x coordinate
@@ -121,19 +127,19 @@ class Output:
                         v=np.dot(self.S,q)
 
                     for k in range(self.N_Chaos+1):
-                        value+=v[k]*self.chaos.chaos_basis_element(k, y)
+                        value+=v[k]*self.chaos.chaos_basis_element(k, yy_cut)
 
                     # Write xx, y, and value to the file
-                    error=np.cos(xx+y)-value
+                    error=self.exact_solution(xx,yy_cut,self.T)-value
                     #error=value
                     #error=np.cos(xx+y)
                     f.write(f"{xx} {error}\n")
 
-    def plot_from_file(self):
+    def plot_from_file(self,xx_cut,yy_cut):
         # Define the filename
-        filename = 'before.txt'
-        filename_two = 'cut_fixed_x.txt'
-        filename_three='cut_fixed_y.txt'
+        filename = 'approx_surface.txt'
+        filename_two= f'bpp_cut_fixed_x_{xx_cut}.txt'
+        filename_three=f'bpp_cut_fixed_y_{yy_cut}.txt'
         # Load data directly into NumPy arrays
         data = np.loadtxt(filename)
         Xp2, Yp2, Zp2 = data[:, 0], data[:, 1], data[:, 2]
@@ -157,6 +163,8 @@ class Output:
         ax.set_ylabel('Y', fontweight='bold')  # Changed from 'V' to 'Y' for consistency
         ax.set_zlabel('Error', fontweight='bold')
 
+        # Add text with the values of self.N_x, self.dgr, and self.N
+        ax.text2D(0.05, 0.95, f'N_x: {self.N_x}, dgr: {self.k}, N: {self.N_Chaos}', transform=ax.transAxes, fontsize=12, fontweight='bold', color='black')   
         # Show or save the plot
         plt.savefig('approx_surface.png')  # Uncomment if you want to save the figure
         #plt.show()
@@ -170,7 +178,15 @@ class Output:
 
         plt.figure(figsize=(8,8))
         plt.plot(T, Y)
-        plt.savefig('approx_cut.png')
+         # Add text to the plot with yy_cut, N_x, dgr, and N values
+        text_str = (f'xx_cut: {xx_cut}\n'
+                    f'N_x: {self.N_x}\n'
+                    f'degree: {self.k}\n'
+                    f'N: {self.N_Chaos}')
+    
+        plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
+             fontsize=12, fontweight='bold', color='black', verticalalignment='top')
+        plt.savefig(f'bpp_cut_fixed_x_{xx_cut}.png')
 
         T, Y = [], []
         for line in open(filename_three, 'r'):
@@ -180,7 +196,12 @@ class Output:
 
         plt.figure(figsize=(8,8))
         plt.plot(T, Y)
-        plt.savefig('error_cut_fixed_y.png')
+        # Add text to the plot with yy_cut, N_x, dgr, and N values
+        text_str = (f'yy_cut: {yy_cut}\n'
+                    f'N_x: {self.N_x}\n'
+                    f'degree: {self.k}\n'
+                    f'N: {self.N_Chaos}')
+        plt.savefig(f'bpp_cut_fixed_y_{yy_cut}.png')
 
 
     #######################################################
