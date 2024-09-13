@@ -44,15 +44,15 @@ class Output:
 #############################################################
     def output(self,xx_cut,i_cut,yy_cut):
         chaos_coeff = self.sg.Chaos_Coefficients
-        self.output_file(self,chaos_coeff,xx_cut,i_cut, yy_cut)
+        self.output_file(chaos_coeff,xx_cut,i_cut, yy_cut,lim_x=10,lim_y=100)
         self.plot_from_file(xx_cut,yy_cut)
 
-    def output_file(self,chaos_coeff,xx_cut,i_cut, yy_cut,lim_x=10,lim_y=100): # take in list of coefficients U
+    def output_file(self,chaos_coeff,xx_cut,i_cut, yy_cut,lim_x,lim_y): # take in list of coefficients U
         points_x = np.linspace(-1.0,1.0,lim_x) #points where we are evaluating in each cell in x.
         points_y = np.linspace(-1.0,1.0,lim_y) #points where we are evaluating in y\in (-1,1).
         
         # Define the filename
-        filename = 'surface.txt'
+        filename = 'approx_surface.txt'
         filename_two= f'bpp_cut_fixed_x_{xx_cut}.txt'
         filename_three=f'bpp_cut_fixed_y_{yy_cut}.txt'
         # Check if the file already exists and delete it
@@ -171,7 +171,7 @@ class Output:
 
 
         T, Y = [], []
-        for line in open('cut.txt', 'r'):
+        for line in open(filename_two, 'r'):
             values = [float(s) for s in line.split()]
             T.append(values[0])
             Y.append(values[1])
@@ -201,6 +201,8 @@ class Output:
                     f'N_x: {self.N_x}\n'
                     f'degree: {self.k}\n'
                     f'N: {self.N_Chaos}')
+        plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
+             fontsize=12, fontweight='bold', color='black', verticalalignment='top')
         plt.savefig(f'bpp_cut_fixed_y_{yy_cut}.png')
 
 

@@ -15,6 +15,7 @@ import matplotlib.tri as mtri
 # File maging    #
 ##################
 import os #Package to handle output 
+import glob
 #############
 from Basis import Basis
 from Mesh import Mesh 
@@ -80,10 +81,10 @@ def rho(y): #uniform distribution in \Omega=(-1.0,1.0)
 # Discontinuous Galerkin method will be used to compute the coefficients(via solving a transport equation) of the chaos expansion. 
 # For phyisical 
 N_x=64  #Number of elements in the Galerkin discretization.
-dgr=1   #Degree of the piecewise polynomial basis. 
+dgr=2   #Degree of the piecewise polynomial basis. 
 
 # For the chaos Galerkin expansion:
-N=4	#Number of basis elements in the chaos Expansion.  
+N=8	#Number of basis elements in the chaos Expansion.  
 Number_Of_Quadrature_Points=3 #Quadrature points in physical space.
 Number_Of_Quadrature_Points_Random=8 #Quadrature points in random space.
 #----------------------------------------------------------------------------------------------------------------------------
@@ -108,9 +109,14 @@ def main():
      ep_cut = 5
      #This is just to compute the exact x_cut 
      gp, wp= np.polynomial.legendre.leggauss(6)
-     xx_cut=mesh.x[i_cut]+gp[ep_cut]*mesh.dx
+     xx_cut=mesh.x[i_cut]+0.5*gp[ep_cut]*mesh.dx
      ########################################
      yy_cut=0.0
+     print("Removing all .png files from the folder.")
+     # Remove all .png files in the current directory
+     files = glob.glob('*.png')
+     for file in files:
+          os.remove(file)
      output.output(xx_cut,i_cut,yy_cut)
      spp.output(i_cut,ep_cut,yy_cut)
 
