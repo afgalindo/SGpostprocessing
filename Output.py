@@ -95,12 +95,13 @@ class Output:
         with open(filename_two, 'w') as f:
             #xx=np.pi
             #i=50        
+            norm_xx_cut=2.0*(xx_cut-self.mesh.x[i_cut])/self.mesh.dx
             for y in points_y:
                 value=0.0
                 q=np.zeros((self.N_Chaos+1))
                 v=np.zeros((self.N_Chaos+1))
                 for k in range(self.N_Chaos):
-                    q[k]=self.evaluate(chaos_coeff[k][i_cut],-1.0)
+                    q[k]=self.evaluate(chaos_coeff[k][i_cut],norm_xx_cut)
                             
                 v=np.dot(self.S,q)
                 
@@ -109,6 +110,7 @@ class Output:
 
                 # Write xx, y, and value to the file
                 #error=value
+                #error=self.exact_solution(xx_cut,y,self.T)
                 error=self.exact_solution(xx_cut,y,self.T)-value
                 f.write(f" {y} {error}\n")
 
@@ -132,7 +134,7 @@ class Output:
                     # Write xx, y, and value to the file
                     error=self.exact_solution(xx,yy_cut,self.T)-value
                     #error=value
-                    #error=np.cos(xx+y)
+                    #error=self.exact_solution(xx,yy_cut,self.T)
                     f.write(f"{xx} {error}\n")
 
     def plot_from_file(self,xx_cut,yy_cut):

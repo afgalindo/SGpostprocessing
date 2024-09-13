@@ -84,12 +84,13 @@ N_x=64  #Number of elements in the Galerkin discretization.
 dgr=2   #Degree of the piecewise polynomial basis. 
 
 # For the chaos Galerkin expansion:
-N=8	#Number of basis elements in the chaos Expansion.  
+N=4	#Number of basis elements in the chaos Expansion.  
 Number_Of_Quadrature_Points=3 #Quadrature points in physical space.
-Number_Of_Quadrature_Points_Random=8 #Quadrature points in random space.
+Number_Of_Quadrature_Points_Random=8#int((N+1)/2)+1 #Quadrature points in random space.
 #----------------------------------------------------------------------------------------------------------------------------
 
 def main():
+     print(Number_Of_Quadrature_Points_Random)
      T=1.0
      eval_points=6 #Number of evaluation points for post-processing,ss
      basis=Basis(dgr)
@@ -105,7 +106,7 @@ def main():
      
      spp=StochasticPP(mesh,basis,chaos,quadrature,sg,pp,eval_points,exact_solution,T)
      # Parameters for plotting
-     i_cut = 31
+     i_cut = 31#int((N_x/2)-1)
      ep_cut = 5
      #This is just to compute the exact x_cut 
      gp, wp= np.polynomial.legendre.leggauss(6)
