@@ -14,13 +14,13 @@ from Output import Output
 from Postprocessing import Postprocessing
 
 class StochasticPP:
-    def __init__(self, mesh, basis, chaos, quadrature, sg, postprocessor, eval_points, exact_solution, T):
+    def __init__(self, mesh, basis, chaos, quadrature, sg, pp, eval_points, exact_solution, T):
         self.mesh=mesh
         self.basis=basis
         self.chaos=chaos
         self.quadrature=quadrature
         self.sg=sg
-        self.pp=postprocessor
+        self.pp=pp
         self.N_x = self.mesh.N_x
         self.dgr = self.basis.degree
         self.N = self.chaos.N

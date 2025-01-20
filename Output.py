@@ -45,6 +45,7 @@ class Output:
     def output(self,xx_cut,i_cut,yy_cut):
         chaos_coeff = self.sg.Chaos_Coefficients
         self.output_file(chaos_coeff,xx_cut,i_cut, yy_cut,lim_x=10,lim_y=100)
+        #self.output_expectation(chaos_coeff)
         self.plot_from_file(xx_cut,yy_cut)
 
     def output_file(self,chaos_coeff,xx_cut,i_cut, yy_cut,lim_x,lim_y): # take in list of coefficients U
@@ -55,6 +56,8 @@ class Output:
         filename = 'approx_surface.txt'
         filename_two= f'bpp_cut_fixed_x_{xx_cut}.txt'
         filename_three=f'bpp_cut_fixed_y_{yy_cut}.txt'
+        expectation   = 'expectation.txt'
+        variation     = 'variation.txt'
         # Check if the file already exists and delete it
         if os.path.isfile(filename):
             os.remove(filename)
@@ -67,6 +70,10 @@ class Output:
         if os.path.isfile(filename_three):
             os.remove(filename_three)
             print("deleted")
+        
+        if os.path.isfile(expectation):
+            os.remove(expectation)
+            print("deleted") 
         # Open a file to write the output
         with open(filename, 'w') as f:
 
@@ -136,12 +143,58 @@ class Output:
                     #error=value
                     #error=self.exact_solution(xx,yy_cut,self.T)
                     f.write(f"{xx} {error}\n")
+        
+        # Open a file to write the output
+        with open(expectation, 'w') as f:
+            #
+            for i in range(self.mesh.N_x):
+                for kx in range(lim_x):
+                    xx=self.mesh.x[i] + 0.5*self.mesh.dx*points_x[kx] #Compute x coordinate
+                    value=0.0
+                    q=np.zeros((self.N_Chaos+1))
+                    v=np.zeros((self.N_Chaos+1))
+                    for k in range(self.N_Chaos):
+                        q[k]=self.evaluate(chaos_coeff[k][i],points_x[kx])
+                        v=np.dot(self.S,q)
+
+                    mean=v[0]#np.cos(xx)*np.sin(1.0)#v[0]
+                    # Write xx, y, and value to the file
+                    #mean=self.exact_solution(xx,yy_cut,self.T)-value
+                    #error=value
+                    #error=self.exact_solution(xx,yy_cut,self.T)
+                    f.write(f"{xx} {mean}\n")
+        #Variation
+        with open(variation, 'w') as f:
+            
+            #y=0.5
+            for i in range(self.mesh.N_x):
+                for kx in range(lim_x):
+                    xx=self.mesh.x[i] + 0.5*self.mesh.dx*points_x[kx] #Compute x coordinate
+                    value=0.0
+                    q=np.zeros((self.N_Chaos+1))
+                    v=np.zeros((self.N_Chaos+1))
+                    for k in range(self.N_Chaos):
+                        q[k]=self.evaluate(chaos_coeff[k][i],points_x[kx])
+                        v=np.dot(self.S,q)
+
+                    for k in range(1,self.N_Chaos+1):
+                        value+=v[k]**2
+
+                    # Write xx, y, and value to the file
+                    variance= (1.0/2.0)+(np.cos(2.0*xx)*np.sin(2.0)/4.0)-(np.cos(xx)**2*np.sin(1.0)**2)
+                    #value
+                    #error=value
+                    #error=self.exact_solution(xx,yy_cut,self.T)
+                    f.write(f"{xx} {variance}\n")
+        
 
     def plot_from_file(self,xx_cut,yy_cut):
         # Define the filename
         filename = 'approx_surface.txt'
         filename_two= f'bpp_cut_fixed_x_{xx_cut}.txt'
         filename_three=f'bpp_cut_fixed_y_{yy_cut}.txt'
+        expectation = 'expectation.txt'
+        variation   = 'variation.txt'
         # Load data directly into NumPy arrays
         data = np.loadtxt(filename)
         Xp2, Yp2, Zp2 = data[:, 0], data[:, 1], data[:, 2]
@@ -207,7 +260,39 @@ class Output:
              fontsize=12, fontweight='bold', color='black', verticalalignment='top')
         plt.savefig(f'bpp_cut_fixed_y_{yy_cut}.png')
 
+        T, Y = [], []
+        for line in open(expectation, 'r'):
+            values = [float(s) for s in line.split()]
+            T.append(values[0])
+            Y.append(values[1])
 
+        plt.figure(figsize=(8,8))
+        plt.plot(T, Y)
+        # Add text to the plot with yy_cut, N_x, dgr, and N values
+        text_str = (f'yy_cut: {yy_cut}\n'
+                    f'N_x: {self.N_x}\n'
+                    f'degree: {self.k}\n'
+                    f'N: {self.N_Chaos}')
+        plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
+             fontsize=12, fontweight='bold', color='black', verticalalignment='top')
+        plt.savefig('expectation.png')
+        ##########################
+        T, Y = [], []
+        for line in open(variation, 'r'):
+            values = [float(s) for s in line.split()]
+            T.append(values[0])
+            Y.append(values[1])
+
+        plt.figure(figsize=(8,8))
+        plt.plot(T, Y)
+        # Add text to the plot with yy_cut, N_x, dgr, and N values
+        text_str = (f'yy_cut: {yy_cut}\n'
+                    f'N_x: {self.N_x}\n'
+                    f'degree: {self.k}\n'
+                    f'N: {self.N_Chaos}')
+        plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
+             fontsize=12, fontweight='bold', color='black', verticalalignment='top')
+        plt.savefig('variation.png')
     #######################################################
     # Transforms a given matrix into a vector             #
     #######################################################
