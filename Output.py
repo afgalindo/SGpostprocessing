@@ -46,7 +46,7 @@ class Output:
         chaos_coeff = self.sg.Chaos_Coefficients
         self.output_file(chaos_coeff,xx_cut,i_cut, yy_cut,lim_x=10,lim_y=100)
         #self.output_expectation(chaos_coeff)
-        self.plot_from_file(xx_cut,yy_cut)
+        #self.plot_from_file(xx_cut,yy_cut)
 
     def output_file(self,chaos_coeff,xx_cut,i_cut, yy_cut,lim_x,lim_y): # take in list of coefficients U
         points_x = np.linspace(-1.0,1.0,lim_x) #points where we are evaluating in each cell in x.
@@ -157,7 +157,7 @@ class Output:
                         q[k]=self.evaluate(chaos_coeff[k][i],points_x[kx])
                         v=np.dot(self.S,q)
 
-                    mean=v[0]#np.cos(xx)*np.sin(1.0)#v[0]
+                    mean=np.cos(xx)*np.sin(1.0)-v[0]
                     # Write xx, y, and value to the file
                     #mean=self.exact_solution(xx,yy_cut,self.T)-value
                     #error=value
@@ -181,8 +181,7 @@ class Output:
                         value+=v[k]**2
 
                     # Write xx, y, and value to the file
-                    variance= (1.0/2.0)+(np.cos(2.0*xx)*np.sin(2.0)/4.0)-(np.cos(xx)**2*np.sin(1.0)**2)
-                    #value
+                    variance= ((1.0/2.0)+(np.cos(2.0*xx)*np.sin(2.0)/4.0)-(np.cos(xx)**2*np.sin(1.0)**2))-value
                     #error=value
                     #error=self.exact_solution(xx,yy_cut,self.T)
                     f.write(f"{xx} {variance}\n")
@@ -190,154 +189,168 @@ class Output:
 
     def plot_from_file(self,xx_cut,yy_cut):
         # Define the filename
-        filename = 'approx_surface.txt'
-        filename_two= f'bpp_cut_fixed_x_{xx_cut}.txt'
-        filename_three=f'bpp_cut_fixed_y_{yy_cut}.txt'
-        expectation = 'expectation.txt'
-        variation   = 'variation.txt'
-        # Load data directly into NumPy arrays
-        data = np.loadtxt(filename)
-        Xp2, Yp2, Zp2 = data[:, 0], data[:, 1], data[:, 2]
+        # filename      = 'approx_surface.txt'
+        # filename_two  = f'bpp_cut_fixed_x_{xx_cut}.txt'
+        # filename_three=f'bpp_cut_fixed_y_{yy_cut}.txt'
+  
+        # # Load data directly into NumPy arrays
+        # data = np.loadtxt(filename)
+        # Xp2, Yp2, Zp2 = data[:, 0], data[:, 1], data[:, 2]
 
-        # Create a triangulation object
-        tri = mtri.Triangulation(Xp2, Yp2)
+        # # Create a triangulation object
+        # tri = mtri.Triangulation(Xp2, Yp2)
 
-        # Create the figure and 3D axes
-        fig = plt.figure(figsize=(16, 9))
-        ax = plt.axes(projection='3d')
+        # # Create the figure and 3D axes
+        # fig = plt.figure(figsize=(16, 9))
+        # ax = plt.axes(projection='3d')
 
-        # Create the triangular surface plot
-        trisurf = ax.plot_trisurf(Xp2, Yp2, Zp2, triangles=tri.triangles, cmap=plt.cm.jet, antialiased=True)
+        # # Create the triangular surface plot
+        # trisurf = ax.plot_trisurf(Xp2, Yp2, Zp2, triangles=tri.triangles, cmap=plt.cm.jet, antialiased=True)
 
-        # Add a color bar 
-        colorbar = fig.colorbar(trisurf, ax=ax, shrink=0.5, aspect=5)
-        colorbar.ax.tick_params(labelsize=14)  # Set the font size of the color bar
+        # # Add a color bar 
+        # colorbar = fig.colorbar(trisurf, ax=ax, shrink=0.5, aspect=5)
+        # colorbar.ax.tick_params(labelsize=14)  # Set the font size of the color bar
 
-        # Adding axis labels
-        ax.set_xlabel('X', fontweight='bold')
-        ax.set_ylabel('Y', fontweight='bold')  # Changed from 'V' to 'Y' for consistency
-        ax.set_zlabel('Error', fontweight='bold')
+        # # Adding axis labels
+        # ax.set_xlabel('X', fontweight='bold')
+        # ax.set_ylabel('Y', fontweight='bold')  # Changed from 'V' to 'Y' for consistency
+        # ax.set_zlabel('Error', fontweight='bold')
 
-        # Add text with the values of self.N_x, self.dgr, and self.N
-        ax.text2D(0.05, 0.95, f'N_x: {self.N_x}, dgr: {self.k}, N: {self.N_Chaos}', transform=ax.transAxes, fontsize=12, fontweight='bold', color='black')   
-        # Show or save the plot
-        plt.savefig('approx_surface.png')  # Uncomment if you want to save the figure
-        #plt.show()
+        # # Add text with the values of self.N_x, self.dgr, and self.N
+        # ax.text2D(0.05, 0.95, f'N_x: {self.N_x}, dgr: {self.k}, N: {self.N_Chaos}', transform=ax.transAxes, fontsize=12, fontweight='bold', color='black')   
+        # # Show or save the plot
+        # plt.savefig('approx_surface.png')  # Uncomment if you want to save the figure
+        # #plt.show()
 
 
-        T, Y = [], []
-        for line in open(filename_two, 'r'):
-            values = [float(s) for s in line.split()]
-            T.append(values[0])
-            Y.append(values[1])
+        # T, Y = [], []
+        # for line in open(filename_two, 'r'):
+        #     values = [float(s) for s in line.split()]
+        #     T.append(values[0])
+        #     Y.append(values[1])
 
-        plt.figure(figsize=(8,8))
-        plt.plot(T, Y)
-         # Add text to the plot with yy_cut, N_x, dgr, and N values
-        text_str = (f'xx_cut: {xx_cut}\n'
-                    f'N_x: {self.N_x}\n'
-                    f'degree: {self.k}\n'
-                    f'N: {self.N_Chaos}')
+        # plt.figure(figsize=(8,8))
+        # plt.plot(T, Y)
+        #  # Add text to the plot with yy_cut, N_x, dgr, and N values
+        # text_str = (f'xx_cut: {xx_cut}\n'
+        #             f'N_x: {self.N_x}\n'
+        #             f'degree: {self.k}\n'
+        #             f'N: {self.N_Chaos}')
     
-        plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
-             fontsize=12, fontweight='bold', color='black', verticalalignment='top')
-        plt.savefig(f'bpp_cut_fixed_x_{xx_cut}.png')
+        # plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
+        #      fontsize=12, fontweight='bold', color='black', verticalalignment='top')
+        # plt.savefig(f'bpp_cut_fixed_x_{xx_cut}.png')
 
+        # T, Y = [], []
+        # for line in open(filename_three, 'r'):
+        #     values = [float(s) for s in line.split()]
+        #     T.append(values[0])
+        #     Y.append(values[1])
+
+        # plt.figure(figsize=(8,8))
+        # plt.plot(T, Y)
+        # # Add text to the plot with yy_cut, N_x, dgr, and N values
+        # text_str = (f'yy_cut: {yy_cut}\n'
+        #             f'N_x: {self.N_x}\n'
+        #             f'degree: {self.k}\n'
+        #             f'N: {self.N_Chaos}')
+        # plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
+        #      fontsize=12, fontweight='bold', color='black', verticalalignment='top')
+        # plt.savefig(f'bpp_cut_fixed_y_{yy_cut}.png')
+
+        # Expectation Plot
         T, Y = [], []
-        for line in open(filename_three, 'r'):
-            values = [float(s) for s in line.split()]
-            T.append(values[0])
-            Y.append(values[1])
+        with open('expectation.txt', 'r') as file:
+            for line in file:
+                values = [float(s) for s in line.split()]
+                T.append(values[0])
+                Y.append(values[1])
 
-        plt.figure(figsize=(8,8))
-        plt.plot(T, Y)
-        # Add text to the plot with yy_cut, N_x, dgr, and N values
-        text_str = (f'yy_cut: {yy_cut}\n'
-                    f'N_x: {self.N_x}\n'
-                    f'degree: {self.k}\n'
-                    f'N: {self.N_Chaos}')
-        plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
-             fontsize=12, fontweight='bold', color='black', verticalalignment='top')
-        plt.savefig(f'bpp_cut_fixed_y_{yy_cut}.png')
+        Tpp, Ypp = [], []
+        with open('pp_expectation.txt', 'r') as file:
+            for line in file:
+                values_pp = [float(s) for s in line.split()]
+                Tpp.append(values_pp[0])
+                Ypp.append(values_pp[1])
 
-        T, Y = [], []
-        for line in open(expectation, 'r'):
-            values = [float(s) for s in line.split()]
-            T.append(values[0])
-            Y.append(values[1])
-
-        plt.figure(figsize=(8,8))
-        plt.plot(T, Y)
-        # Add text to the plot with yy_cut, N_x, dgr, and N values
-        text_str = (f'yy_cut: {yy_cut}\n'
-                    f'N_x: {self.N_x}\n'
-                    f'degree: {self.k}\n'
-                    f'N: {self.N_Chaos}')
-        plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
-             fontsize=12, fontweight='bold', color='black', verticalalignment='top')
+        plt.plot(T, Y, label='Before postprocessing', color='blue')
+        #plt.plot(Tpp, Ypp, label='After postprocessing', linestyle='--', color='red')
+        plt.xlabel('x')
+        plt.ylabel('Expectation')
+        plt.title('Expectation vs. Post-Processed Expectation')
+        plt.legend()
         plt.savefig('expectation.png')
-        ##########################
-        T, Y = [], []
-        for line in open(variation, 'r'):
-            values = [float(s) for s in line.split()]
-            T.append(values[0])
-            Y.append(values[1])
+        plt.clf()  # Clear the current figure
 
-        plt.figure(figsize=(8,8))
-        plt.plot(T, Y)
-        # Add text to the plot with yy_cut, N_x, dgr, and N values
-        text_str = (f'yy_cut: {yy_cut}\n'
-                    f'N_x: {self.N_x}\n'
-                    f'degree: {self.k}\n'
-                    f'N: {self.N_Chaos}')
-        plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
-             fontsize=12, fontweight='bold', color='black', verticalalignment='top')
+        # Variation Plot
+        T_var, Y_var = [], []
+        with open('variation.txt', 'r') as file:
+            for line in file:
+                values = [float(s) for s in line.split()]
+                T_var.append(values[0])
+                Y_var.append(values[1])
+
+        Tpp_var, Ypp_var = [], []
+        with open('pp_variation.txt', 'r') as file:
+            for line in file:
+                values_pp = [float(s) for s in line.split()]
+                Tpp_var.append(values_pp[0])
+                Ypp_var.append(values_pp[1])
+
+        plt.plot(T_var, Y_var, label='Before postprocessing', color='blue')
+        plt.plot(Tpp_var, Ypp_var, label='After postprocessing', linestyle='--', color='red')
+        plt.xlabel('x')
+        plt.ylabel('Variation')
+        plt.title('Variation vs. Post-Processed Variation')
+        plt.legend()
         plt.savefig('variation.png')
-    #######################################################
-    # Transforms a given matrix into a vector             #
-    #######################################################
-    def vectorize_coeff(self,matrix):
-        vector=np.zeros((self.basis.degree+1)*self.N_x)
-        for i in range(self.N_x):
-            for j in range(self.basis.degree+1):
-                index=i*(self.basis.degree+1)+j
-                vector[index]=matrix[i][j]
 
-        return vector
-    #######################################################
-    # This function will output the chaos coefficients    #
-    # in different files.                                 #
-    #######################################################
-    def output_coefficients(self,chaos_coeff):
-        # Loop to create new files with names based on the loop iteration
-        for i in range(self.N_Chaos+1):
-            # Create a filename based on the loop iteration
-            filename = f"chaos_coeff_{i}.txt"
-            # Check if the file already exists and delete it
-            if os.path.isfile(filename):
-                os.remove(filename)
-                print("deleted")
-            vectorized=self.vectorize_coeff(chaos_coeff[i])
-            # Open the file in write mode and write some information 
-            # Open a file and write the vector with each value on a new line
-            with open(filename, "w") as file:
-                for value in vectorized:
-                    file.write(f"{value}\n")  
+        ##########################
+    # #######################################################
+    # # Transforms a given matrix into a vector             #
+    # #######################################################
+    # def vectorize_coeff(self,matrix):
+    #     vector=np.zeros((self.basis.degree+1)*self.N_x)
+    #     for i in range(self.N_x):
+    #         for j in range(self.basis.degree+1):
+    #             index=i*(self.basis.degree+1)+j
+    #             vector[index]=matrix[i][j]
 
-    #######################################################
-    # This function will read the file produced in the    #
-    # function above "output_coefficients" and reconstruct#
-    # a coefficient, given a file .                       #
-    # #####################################################
-    def reconstruct_coeff(self,filename):    
-        vectorized_coeff=np.zeros((self.basis.degree+1)*self.N_x) 
-        coefficient=np.zeros((self.N_x,self.basis.degree+1))
-        with open(filename, 'r') as file:
-            # Read all lines and convert them to float, stripping any extra spaces
-            vectorized_coeff = [float(line.strip()) for line in file]
+    #     return vector
+    # #######################################################
+    # # This function will output the chaos coefficients    #
+    # # in different files.                                 #
+    # #######################################################
+    # def output_coefficients(self,chaos_coeff):
+    #     # Loop to create new files with names based on the loop iteration
+    #     for i in range(self.N_Chaos+1):
+    #         # Create a filename based on the loop iteration
+    #         filename = f"chaos_coeff_{i}.txt"
+    #         # Check if the file already exists and delete it
+    #         if os.path.isfile(filename):
+    #             os.remove(filename)
+    #             print("deleted")
+    #         vectorized=self.vectorize_coeff(chaos_coeff[i])
+    #         # Open the file in write mode and write some information 
+    #         # Open a file and write the vector with each value on a new line
+    #         with open(filename, "w") as file:
+    #             for value in vectorized:
+    #                 file.write(f"{value}\n")  
+
+    # #######################################################
+    # # This function will read the file produced in the    #
+    # # function above "output_coefficients" and reconstruct#
+    # # a coefficient, given a file .                       #
+    # # #####################################################
+    # def reconstruct_coeff(self,filename):    
+    #     vectorized_coeff=np.zeros((self.basis.degree+1)*self.N_x) 
+    #     coefficient=np.zeros((self.N_x,self.basis.degree+1))
+    #     with open(filename, 'r') as file:
+    #         # Read all lines and convert them to float, stripping any extra spaces
+    #         vectorized_coeff = [float(line.strip()) for line in file]
             
-        for i in range(self.N_x):
-            for j in range(self.basis.degree+1):
-                index=i*(self.basis.degree+1)+j
-                coefficient[i][j]=vectorized_coeff[index]
-        return coefficient
+    #     for i in range(self.N_x):
+    #         for j in range(self.basis.degree+1):
+    #             index=i*(self.basis.degree+1)+j
+    #             coefficient[i][j]=vectorized_coeff[index]
+    #     return coefficient

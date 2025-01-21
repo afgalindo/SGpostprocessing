@@ -43,7 +43,8 @@ class StochasticPP:
         self._output_error_surface(x, PP_q, y)
         self._output_cut_x(x, PP_q, y, i_cut,ep_cut)
         self._output_cut_y(x, PP_q, yy_cut)
-    
+        self._output_expectation(x,PP_q)
+        self._output_variation(x,PP_q)
     def _output_error_surface(self, x, PP_q, y):
         filename = 'PP_solution.txt'
         if os.path.isfile(filename):
@@ -100,14 +101,14 @@ class StochasticPP:
         plt.figure(figsize=(8, 8))
         plt.plot(T, Y)
 
-        # Add text to the plot with yy_cut, N_x, dgr, and N values
-        text_str = (f'xx_cut: {xx}\n'
-                    f'N_x: {self.N_x}\n'
-                    f'degree: {self.dgr}\n'
-                    f'N: {self.N}')
+        # # Add text to the plot with yy_cut, N_x, dgr, and N values
+        # text_str = (f'xx_cut: {xx}\n'
+        #             f'N_x: {self.N_x}\n'
+        #             f'degree: {self.dgr}\n'
+        #             f'N: {self.N}')
     
-        plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
-             fontsize=12, fontweight='bold', color='black', verticalalignment='top')
+        # plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
+        #      fontsize=12, fontweight='bold', color='black', verticalalignment='top')
         plt.savefig(f'pp_cut_x_{xx}.png')
     
     def _output_cut_y(self, x, PP_q,yy_cut):  
@@ -131,13 +132,76 @@ class StochasticPP:
         plt.figure(figsize=(8, 8))
         plt.plot(T, Y)
         # Add text to the plot with yy_cut, N_x, dgr, and N values
-        text_str = (f'yy_cut: {yy_cut}\n'
-                    f'N_x: {self.N_x}\n'
-                    f'degree: {self.dgr}\n'
-                    f'N: {self.N}')
+        # text_str = (f'yy_cut: {yy_cut}\n'
+        #             f'N_x: {self.N_x}\n'
+        #             f'degree: {self.dgr}\n'
+        #             f'N: {self.N}')
     
-        plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
-             fontsize=12, fontweight='bold', color='black', verticalalignment='top')
+        # plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
+        #      fontsize=12, fontweight='bold', color='black', verticalalignment='top')
         plt.savefig(f'pp_cut_y_{yy_cut}.png')
 
+    def _output_expectation(self, x, PP_q):
+        
+        filename = 'pp_expectation.txt'
+        if os.path.isfile(filename):
+            os.remove(filename)
+        
+        with open(filename, 'w') as f:
+            for i in range(self.N_x):
+                for ep in range(self.eval_points):
+                    q_eval = np.array([PP_q[k][i][ep] for k in range(self.N + 1)])
+                    v_eval = np.dot(self.sg.S, q_eval)
+                    
+                    value = v_eval[0]
+                    xx = x[i][ep]
+                    error=np.cos(xx)*np.sin(1.0)-value
+                    #error = np.cos(xx + yy_cut) - value
+                    f.write(f"{xx} {error}\n")
+        
+        # T, Y = np.loadtxt(filename, unpack=True)
+        # plt.figure(figsize=(8, 8))
+        # plt.plot(T, Y)
+
+        # # Add text to the plot with yy_cut, N_x, dgr, and N values
+        # text_str = (f'xx_cut: {xx}\n'
+        #             f'N_x: {self.N_x}\n'
+        #             f'degree: {self.dgr}\n'
+        #             f'N: {self.N}')
+    
+        # plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
+        #      fontsize=12, fontweight='bold', color='black', verticalalignment='top')
+        # plt.savefig('pp_expectation.png')
+
+    def _output_variation(self, x, PP_q):
+        
+        filename = 'pp_variation.txt'
+        if os.path.isfile(filename):
+            os.remove(filename)
+        
+        with open(filename, 'w') as f:
+            for i in range(self.N_x):
+                for ep in range(self.eval_points):
+                    q_eval = np.array([PP_q[k][i][ep] for k in range(self.N + 1)])
+                    v_eval = np.dot(self.sg.S, q_eval)
+                    
+                    value = sum(v_eval[k]*v_eval[k] for k in range(1,self.N + 1))
+                    xx = x[i][ep]
+                    error=((1.0/2.0)+(np.cos(2.0*xx)*np.sin(2.0)/4.0)-(np.cos(xx)**2*np.sin(1.0)**2))-value
+                    #error = np.cos(xx + yy_cut) - value
+                    f.write(f"{xx} {error}\n")
+        
+        # T, Y = np.loadtxt(filename, unpack=True)
+        # plt.figure(figsize=(8, 8))
+        # plt.plot(T, Y)
+
+        # # Add text to the plot with yy_cut, N_x, dgr, and N values
+        # text_str = (f'xx_cut: {xx}\n'
+        #             f'N_x: {self.N_x}\n'
+        #             f'degree: {self.dgr}\n'
+        #             f'N: {self.N}')
+    
+        # plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
+        #      fontsize=12, fontweight='bold', color='black', verticalalignment='top')
+        # plt.savefig('pp_variation.png')
 

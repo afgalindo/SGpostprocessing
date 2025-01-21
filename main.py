@@ -94,7 +94,7 @@ def main():
      ell=dgr+1
      RS=dgr
      T=1.0
-     eval_points=6 #Number of evaluation points for post-processing,ss
+     eval_points=10 #Number of evaluation points for post-processing,ss
      basis=Basis(dgr)
      mesh=Mesh(N_x,x_left,x_right)
      quadrature=Quadrature(Number_Of_Quadrature_Points)
@@ -122,6 +122,7 @@ def main():
           os.remove(file)
      output.output(xx_cut,i_cut,yy_cut)
      spp.output(i_cut,ep_cut,yy_cut)
-
+     output.plot_from_file(xx_cut,yy_cut)
+                           
 if __name__ == "__main__":
     main()
