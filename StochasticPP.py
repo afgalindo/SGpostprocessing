@@ -45,6 +45,30 @@ class StochasticPP:
         self._output_cut_y(x, PP_q, yy_cut)
         self._output_expectation(x,PP_q)
         self._output_variation(x,PP_q)
+
+        mean_error_inf, variation_error_inf, \
+        mean_error_one, variation_error_one, \
+        mean_error_two, variation_error_two = self.compute_pp_error_norm(x,PP_q)
+        print('##############################################')
+        print('problem data:')
+        print('N_Chaos=',self.N)
+        print('Nx=',self.N_x)
+        print('Polynomial degree=',self.dgr)
+        print('##############################################')
+        print('AFTER POSTPROCESSING:')
+        print('##############################################')
+        print('MEAN INFO')
+        print('##############################################')
+        print("mean_error_inf:", mean_error_inf)
+        print("mean_error_one:", mean_error_one)
+        print("mean_error_two:", mean_error_two)
+        print('##############################################')
+        print('VAR INFO')
+        print('##############################################')
+        print("variation_error_inf:", variation_error_inf)
+        print("variation_error_one:", variation_error_one)
+        print("variation_error_two:", variation_error_two)
+        print('##############################################')
     def _output_error_surface(self, x, PP_q, y):
         filename = 'PP_solution.txt'
         if os.path.isfile(filename):
@@ -205,3 +229,69 @@ class StochasticPP:
         #      fontsize=12, fontweight='bold', color='black', verticalalignment='top')
         # plt.savefig('pp_variation.png')
 
+    def compute_pp_error_norm(self, x, PP_q):
+        """Compute the L∞, L1, and L2 error norms for the mean and variation 
+        of the solution using Gauss-Legendre quadrature.
+
+        Parameters:
+            x (array): Array of x-coordinates for each mesh point.
+            PP_q (list of arrays): Solution coefficients for each mode at each quadrature point.
+
+        Returns:
+            tuple: (mean_error_inf, variation_error_inf, mean_error_one, variation_error_one, 
+                    mean_error_two, variation_error_two)
+        """
+
+        # Gauss-Legendre quadrature points and weights
+        _, wp = np.polynomial.legendre.leggauss(self.eval_points)
+        half_dx = 0.5 * self.mesh.dx
+
+        # Define negative infinity and initialize norms
+        minus_infinity = float('-inf')
+        mean_error_inf = minus_infinity
+        variation_error_inf = minus_infinity
+        mean_error_one = variation_error_one = 0.0
+        mean_error_two = variation_error_two = 0.0
+
+        for i in range(self.mesh.N_x):
+            # Integrals for mean and variation
+            integral_mean_one = integral_mean_two = 0.0
+            integral_var_one = integral_var_two = 0.0
+
+            for ep in range(self.eval_points):
+                xx = x[i][ep]  # Compute x-coordinate
+                q_eval = np.array([PP_q[k][i][ep] for k in range(self.N + 1)])
+                v_eval = np.dot(self.sg.S, q_eval)
+                
+                variation = sum(v_eval[k]*v_eval[k] for k in range(1,self.N + 1))
+
+
+                # Compute errors
+                error_mean = np.cos(xx) * np.sin(1.0) - v_eval[0]
+                error_variation = ((0.5) + (np.cos(2.0 * xx) * np.sin(2.0) / 4.0) -
+                                (np.cos(xx) ** 2 * np.sin(1.0) ** 2)) - variation
+
+                # Update L-infinity norms
+                mean_error_inf = max(mean_error_inf, abs(error_mean))
+                variation_error_inf = max(variation_error_inf, abs(error_variation))
+
+                # Update L1 and L2 integrals
+                integral_mean_one += abs(error_mean) * wp[ep] * half_dx
+                integral_var_one += abs(error_variation) * wp[ep] * half_dx
+                integral_mean_two += error_mean ** 2 * wp[ep] * half_dx
+                integral_var_two += error_variation ** 2 * wp[ep] * half_dx
+
+            # Add integrals to norms
+            mean_error_one += integral_mean_one
+            variation_error_one += integral_var_one
+            mean_error_two += integral_mean_two
+            variation_error_two += integral_var_two
+
+        # Normalize and compute final L2 norms
+        length = self.mesh.R - self.mesh.L
+        mean_error_one /= length
+        variation_error_one /= length
+        mean_error_two = np.sqrt(mean_error_two)
+        variation_error_two = np.sqrt(variation_error_two)
+
+        return mean_error_inf, variation_error_inf, mean_error_one, variation_error_one, mean_error_two, variation_error_two

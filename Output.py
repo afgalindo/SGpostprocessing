@@ -45,6 +45,7 @@ class Output:
     def output(self,xx_cut,i_cut,yy_cut):
         chaos_coeff = self.sg.Chaos_Coefficients
         self.output_file(chaos_coeff,xx_cut,i_cut, yy_cut,lim_x=10,lim_y=100)
+        mn_square_error,\
         mean_error_inf, variation_error_inf, \
         mean_error_one, variation_error_one, \
         mean_error_two, variation_error_two = self.compute_error_norm(chaos_coeff, eval_points=10)
@@ -55,6 +56,10 @@ class Output:
         print('Polynomial degree=',self.k)
         print('##############################################')
         print('BEFORE POSTPROCESSING:')
+        print('##############################################')
+        print('MEAN SQUARE ERROR')
+        print('##############################################')
+        print("mean_square_error:", mn_square_error)
         print('##############################################')
         print('MEAN INFO')
         print('##############################################')
@@ -325,17 +330,40 @@ class Output:
         plt.savefig('variation.png')
 
     def compute_error_norm(self, chaos_coeff, eval_points):
+        eval_point_at_y=int(0.5*self.N_Chaos+0.5)+1# Of Gauss Points for random y. 
         # Gauss-Legendre quadrature points and weights
         gp, wp = np.polynomial.legendre.leggauss(eval_points)
+        gpy, wpy =np.polynomial.legendre.leggauss(eval_point_at_y)
         half_dx = 0.5 * self.mesh.dx
-
         # Define negative infinity and initialize norms
         minus_infinity = float('-inf')
+        # Mean square error norm for u
+        mn_square_error= 0.0
+        # Errors for mean and Var
         mean_error_inf = minus_infinity
         variation_error_inf = minus_infinity
         mean_error_one = variation_error_one = 0.0
         mean_error_two = variation_error_two = 0.0
-
+        #
+        for i in range(self.mesh.N_x):
+            integral_mean_one=integral_mean_two=0.0
+            for kx in range(eval_points):
+                xx=self.mesh.x[i] + 0.5*self.mesh.dx*gp[kx] #Compute x coordinate
+                for ky in range(eval_point_at_y):
+                    value=0.0
+                    q=np.zeros((self.N_Chaos+1))
+                    v=np.zeros((self.N_Chaos+1))
+                    for k in range(self.N_Chaos):
+                        q[k]=self.evaluate(chaos_coeff[k][i],gp[kx])          
+                    
+                    v=np.dot(self.S,q)
+                    for k in range(self.N_Chaos+1):
+                        value+=v[k]*self.chaos.chaos_basis_element(k,gpy[ky])
+                    # Write xx, y, and value to the file
+                    error=self.exact_solution(xx,gpy[ky],self.T)-value
+                    integral_mean_two+=error*error*half_dx*wp[kx]*wpy[ky]
+            mn_square_error+=integral_mean_two
+        #Mean and VAR norm calculations,
         for i in range(self.mesh.N_x):
             # Integrals for mean and variation
             integral_mean_one = integral_mean_two = 0.0
@@ -379,7 +407,7 @@ class Output:
         mean_error_two = np.sqrt(mean_error_two)
         variation_error_two = np.sqrt(variation_error_two)
 
-        return mean_error_inf, variation_error_inf, mean_error_one, variation_error_one, mean_error_two, variation_error_two
+        return mn_square_error,mean_error_inf, variation_error_inf, mean_error_one, variation_error_one, mean_error_two, variation_error_two
 
         ##########################
     # #######################################################
