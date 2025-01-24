@@ -346,13 +346,13 @@ class Output:
         mean_error_two = variation_error_two = 0.0
         #
         for i in range(self.mesh.N_x):
-            integral_mean_one=integral_mean_two=0.0
+            integral_mean_two=0.0
             for kx in range(eval_points):
                 xx=self.mesh.x[i] + 0.5*self.mesh.dx*gp[kx] #Compute x coordinate
                 for ky in range(eval_point_at_y):
                     value=0.0
                     q=np.zeros((self.N_Chaos+1))
-                    v=np.zeros((self.N_Chaos+1))
+                    v=np.zeros((self.N_Chaos+1))                   
                     for k in range(self.N_Chaos):
                         q[k]=self.evaluate(chaos_coeff[k][i],gp[kx])          
                     

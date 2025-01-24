@@ -45,7 +45,8 @@ class StochasticPP:
         self._output_cut_y(x, PP_q, yy_cut)
         self._output_expectation(x,PP_q)
         self._output_variation(x,PP_q)
-
+        
+        mn_square_error,\
         mean_error_inf, variation_error_inf, \
         mean_error_one, variation_error_one, \
         mean_error_two, variation_error_two = self.compute_pp_error_norm(x,PP_q)
@@ -57,6 +58,10 @@ class StochasticPP:
         print('##############################################')
         print('AFTER POSTPROCESSING:')
         print('##############################################')
+        print('MEAN SQUARE ERROR')
+        print('##############################################')
+        print("mean_square_error:", mn_square_error)
+        print('##############################################')        
         print('MEAN INFO')
         print('##############################################')
         print("mean_error_inf:", mean_error_inf)
@@ -242,18 +247,35 @@ class StochasticPP:
                     mean_error_two, variation_error_two)
         """
 
+        eval_point_at_y=int(0.5*self.N+0.5)+1# Of Gauss Points for random y. 
         # Gauss-Legendre quadrature points and weights
         _, wp = np.polynomial.legendre.leggauss(self.eval_points)
+        gpy, wpy =np.polynomial.legendre.leggauss(eval_point_at_y)
         half_dx = 0.5 * self.mesh.dx
 
         # Define negative infinity and initialize norms
         minus_infinity = float('-inf')
+        # Mean square error norm for u
+        mn_square_error= 0.0
+        # Errors for mean and Var
         mean_error_inf = minus_infinity
         variation_error_inf = minus_infinity
         mean_error_one = variation_error_one = 0.0
         mean_error_two = variation_error_two = 0.0
-
-        for i in range(self.mesh.N_x):
+        #
+        for i in range(self.N_x):
+            cell_mean_sq_error=0.0
+            for ep in range(self.eval_points):
+                xx=x[i][ep]
+                q_eval = np.array([PP_q[k][i][ep] for k in range(self.N + 1)])
+                v_eval = np.dot(self.sg.S, q_eval)                        
+                for ky in range(eval_point_at_y):
+                    value = sum(v_eval[k] * self.chaos.chaos_basis_element(k, gpy[ky]) for k in range(self.N + 1))
+                    error =self.exact_solution(xx,gpy[ky],self.T)- value
+                    cell_mean_sq_error+=error*error*half_dx*wp[ep]*wpy[ky]
+            mn_square_error+=cell_mean_sq_error
+        #Mean and VAR norm calculations,
+        for i in range(self.N_x):
             # Integrals for mean and variation
             integral_mean_one = integral_mean_two = 0.0
             integral_var_one = integral_var_two = 0.0
@@ -294,4 +316,4 @@ class StochasticPP:
         mean_error_two = np.sqrt(mean_error_two)
         variation_error_two = np.sqrt(variation_error_two)
 
-        return mean_error_inf, variation_error_inf, mean_error_one, variation_error_one, mean_error_two, variation_error_two
+        return mn_square_error, mean_error_inf, variation_error_inf, mean_error_one, variation_error_one, mean_error_two, variation_error_two
