@@ -31,6 +31,7 @@ class SGSolver:
         self.S = np.zeros((self.N_Chaos+1, self.N_Chaos+1))  #Matrix S of the diagonalization SDS^(-1)=A with the coefficients of the system of PDE's dv/dt=A*dv/dx.
         self.S_inv = np.zeros((self.N_Chaos+1, self.N_Chaos+1))  #Matrix S of the diagonalization SDS^(-1)=A with the coefficients of the system of PDE's dv/dt=A*dv/dx.
         self.D=np.zeros((self.N_Chaos+1))               #Array with the eigenvalues of the diagonilazation.
+        self.Max_Eigenvalue=0.0                    #Maximum eigenvalue of the system of PDE's.             
         self.Set_PDE()   
         #For plotting purposes:
         self.t=[]
@@ -39,6 +40,8 @@ class SGSolver:
 #Set up the PDE for the coefficients by creating S, and D.
     def Set_PDE(self):
         self.S, self.S_inv, self.D=self.chaos.initialize_Diagonalization(self.c)
+        D_abs=np.abs(self.D)
+        self.Max_Eigenvalue=D_abs.max()
 #Given N, it creates N arrays which will contain the DG coefficients of the ith Chaos_expansion coefficient.
     def Create_Coefficients(self):
         for i in range(self.N_Chaos+1):
@@ -76,7 +79,7 @@ class SGSolver:
         while self.current_time <self.T:
             #square=0.0
             max=0.0
-            dt = self.dg.compute_dt(self.current_time,self.T)
+            dt = self.dg.compute_dt(self.Max_Eigenvalue,self.current_time,self.T)
             for entry in range(self.N_Chaos+1):
                 self.Chaos_Coefficients[entry]=self.dg.compute_RK(self.D[entry],self.Chaos_Coefficients[entry], dt)
                 #square+=self.dg.Compute_L2_norm(self.Chaos_Coefficients[entry])

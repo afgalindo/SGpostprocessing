@@ -169,45 +169,22 @@ class Output:
                     #error=self.exact_solution(xx,yy_cut,self.T)
                     f.write(f"{xx} {error}\n")
         
-        # Open a file to write the output
-        with open(expectation, 'w') as f:
-            #
+        # Open files to write the output
+        with open(expectation, 'w') as f_exp, open(variation, 'w') as f_var:
             for i in range(self.mesh.N_x):
                 for kx in range(lim_x):
-                    xx=self.mesh.x[i] + 0.5*self.mesh.dx*points_x[kx] #Compute x coordinate
-                    value=0.0
-                    q=np.zeros((self.N_Chaos+1))
-                    v=np.zeros((self.N_Chaos+1))
-                    for k in range(self.N_Chaos):
-                        q[k]=self.evaluate(chaos_coeff[k][i],points_x[kx])
-                        v=np.dot(self.S,q)
-
-                    mean=np.cos(xx)*np.sin(1.0)-v[0]
-                    # Write xx, y, and value to the file
-                    #mean=self.exact_solution(xx,yy_cut,self.T)-value
-                    #error=value
-                    #error=self.exact_solution(xx,yy_cut,self.T)
-                    f.write(f"{xx} {mean}\n")
-        #Variation
-        with open(variation, 'w') as f:
-            
-            #y=0.5
-            for i in range(self.mesh.N_x):
-                for kx in range(lim_x):
-                    xx=self.mesh.x[i] + 0.5*self.mesh.dx*points_x[kx] #Compute x coordinate
-                    value=0.0
-                    q=np.zeros((self.N_Chaos+1))
-                    v=np.zeros((self.N_Chaos+1))
-                    for k in range(self.N_Chaos):
-                        q[k]=self.evaluate(chaos_coeff[k][i],points_x[kx])
-                        v=np.dot(self.S,q)
-
-                    value=sum(v[k]*v[k] for k in range(1,self.N_Chaos+1))
-                    # Write xx, y, and value to the file
-                    variance= ((1.0/2.0)+(np.cos(2.0*xx)*np.sin(2.0)/4.0)-(np.cos(xx)**2*np.sin(1.0)**2))-value
-                    #error=value
-                    #error=self.exact_solution(xx,yy_cut,self.T)
-                    f.write(f"{xx} {variance}\n")
+                    xx = self.mesh.x[i] + 0.5 * self.mesh.dx * points_x[kx]  # Compute x coordinate
+                    q = [self.evaluate(chaos_coeff[k][i], points_x[kx]) for k in range(self.N_Chaos + 1)]
+                    v = np.dot(self.S, q)
+                
+                    # Compute mean error
+                    mean_error = np.cos(xx) * np.sin(1.0) - v[0]
+                    f_exp.write(f"{xx} {mean_error}\n")
+                
+                    # Compute variance
+                    variance = sum(v[k] * v[k] for k in range(1, self.N_Chaos + 1))
+                    variance_error = ((1.0 / 2.0) + (np.cos(2.0 * xx) * np.sin(2.0) / 4.0) - (np.cos(xx) ** 2 * np.sin(1.0) ** 2)) - variance
+                    f_var.write(f"{xx} {variance_error}\n")
         
 
     def plot_from_file(self,xx_cut,yy_cut):
@@ -344,45 +321,28 @@ class Output:
         variation_error_inf = minus_infinity
         mean_error_one = variation_error_one = 0.0
         mean_error_two = variation_error_two = 0.0
-        #
+        
+        
         for i in range(self.mesh.N_x):
-            integral_mean_two=0.0
-            for kx in range(eval_points):
-                xx=self.mesh.x[i] + 0.5*self.mesh.dx*gp[kx] #Compute x coordinate
-                for ky in range(eval_point_at_y):
-                    value=0.0
-                    q=np.zeros((self.N_Chaos+1))
-                    v=np.zeros((self.N_Chaos+1))                   
-                    for k in range(self.N_Chaos):
-                        q[k]=self.evaluate(chaos_coeff[k][i],gp[kx])          
-                    
-                    v=np.dot(self.S,q)
-                    for k in range(self.N_Chaos+1):
-                        value+=v[k]*self.chaos.chaos_basis_element(k,gpy[ky])
-                    # Write xx, y, and value to the file
-                    error=self.exact_solution(xx,gpy[ky],self.T)-value
-                    integral_mean_two+=error*error*half_dx*wp[kx]*wpy[ky]
-            mn_square_error+=integral_mean_two
-        #Mean and VAR norm calculations,
-        for i in range(self.mesh.N_x):
-            # Integrals for mean and variation
+            local_integral = 0.0
             integral_mean_one = integral_mean_two = 0.0
             integral_var_one = integral_var_two = 0.0
 
             for kx in range(eval_points):
-                xx = self.mesh.x[i] + half_dx * gp[kx]  # Compute x-coordinate
-                q = np.zeros(self.N_Chaos + 1)
-                
-                for k in range(self.N_Chaos + 1):
-                    q[k] = self.evaluate(chaos_coeff[k][i], gp[kx])
-                
+                xx = self.mesh.x[i] + 0.5 * self.mesh.dx * gp[kx]  # Compute x coordinate
+                q = np.array([self.evaluate(chaos_coeff[k][i], gp[kx]) for k in range(self.N_Chaos + 1)])
                 v = np.dot(self.S, q)
                 variation = sum(v[k] * v[k] for k in range(1, self.N_Chaos + 1))
+
+                for ky in range(eval_point_at_y):
+                    value = sum(v[k] * self.chaos.chaos_basis_element(k, gpy[ky]) for k in range(self.N_Chaos + 1))
+                    error = self.exact_solution(xx, gpy[ky], self.T) - value
+                    local_integral += error * error * wpy[ky] * wp[kx]
 
                 # Compute errors
                 error_mean = np.cos(xx) * np.sin(1.0) - v[0]
                 error_variation = ((0.5) + (np.cos(2.0 * xx) * np.sin(2.0) / 4.0) -
-                                (np.cos(xx) ** 2 * np.sin(1.0) ** 2)) - variation
+                       (np.cos(xx) ** 2 * np.sin(1.0) ** 2)) - variation
 
                 # Update L-infinity norms
                 mean_error_inf = max(mean_error_inf, abs(error_mean))
@@ -394,7 +354,7 @@ class Output:
                 integral_mean_two += error_mean ** 2 * wp[kx] * half_dx
                 integral_var_two += error_variation ** 2 * wp[kx] * half_dx
 
-            # Add integrals to norms
+            mn_square_error += local_integral
             mean_error_one += integral_mean_one
             variation_error_one += integral_var_one
             mean_error_two += integral_mean_two
@@ -402,12 +362,13 @@ class Output:
 
         # Normalize and compute final L2 norms
         length = self.mesh.R - self.mesh.L
+        mn_square_error *= 0.5 * half_dx
         mean_error_one /= length
         variation_error_one /= length
-        mean_error_two = np.sqrt(mean_error_two)
-        variation_error_two = np.sqrt(variation_error_two)
+        mean_error_two = np.sqrt(mean_error_two/length)
+        variation_error_two = np.sqrt(variation_error_two/length)
 
-        return mn_square_error,mean_error_inf, variation_error_inf, mean_error_one, variation_error_one, mean_error_two, variation_error_two
+        return mn_square_error, mean_error_inf, variation_error_inf, mean_error_one, variation_error_one, mean_error_two, variation_error_two
 
         ##########################
     # #######################################################

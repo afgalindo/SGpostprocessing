@@ -43,9 +43,9 @@ class StochasticPP:
         self._output_error_surface(x, PP_q, y)
         self._output_cut_x(x, PP_q, y, i_cut,ep_cut)
         self._output_cut_y(x, PP_q, yy_cut)
-        self._output_expectation(x,PP_q)
-        self._output_variation(x,PP_q)
-        
+        self._output_expectation_and_variation(x,PP_q)
+
+        #########################
         mn_square_error,\
         mean_error_inf, variation_error_inf, \
         mean_error_one, variation_error_one, \
@@ -170,55 +170,32 @@ class StochasticPP:
         #      fontsize=12, fontweight='bold', color='black', verticalalignment='top')
         plt.savefig(f'pp_cut_y_{yy_cut}.png')
 
-    def _output_expectation(self, x, PP_q):
+    def _output_expectation_and_variation(self, x, PP_q):
         
-        filename = 'pp_expectation.txt'
-        if os.path.isfile(filename):
-            os.remove(filename)
+        filename_expectation = 'pp_expectation.txt'
+        filename_variation = 'pp_variation.txt'
         
-        with open(filename, 'w') as f:
+        if os.path.isfile(filename_expectation):
+            os.remove(filename_expectation)
+        if os.path.isfile(filename_variation):
+            os.remove(filename_variation)
+        
+        with open(filename_expectation, 'w') as f_exp, open(filename_variation, 'w') as f_var:
             for i in range(self.N_x):
                 for ep in range(self.eval_points):
                     q_eval = np.array([PP_q[k][i][ep] for k in range(self.N + 1)])
                     v_eval = np.dot(self.sg.S, q_eval)
                     
-                    value = v_eval[0]
+                    value_exp = v_eval[0]
+                    value_var = sum(v_eval[k]*v_eval[k] for k in range(1, self.N + 1))
                     xx = x[i][ep]
-                    error=np.cos(xx)*np.sin(1.0)-value
-                    #error = np.cos(xx + yy_cut) - value
-                    f.write(f"{xx} {error}\n")
-        
-        # T, Y = np.loadtxt(filename, unpack=True)
-        # plt.figure(figsize=(8, 8))
-        # plt.plot(T, Y)
-
-        # # Add text to the plot with yy_cut, N_x, dgr, and N values
-        # text_str = (f'xx_cut: {xx}\n'
-        #             f'N_x: {self.N_x}\n'
-        #             f'degree: {self.dgr}\n'
-        #             f'N: {self.N}')
-    
-        # plt.text(0.05, 0.95, text_str, transform=plt.gca().transAxes,
-        #      fontsize=12, fontweight='bold', color='black', verticalalignment='top')
-        # plt.savefig('pp_expectation.png')
-
-    def _output_variation(self, x, PP_q):
-        
-        filename = 'pp_variation.txt'
-        if os.path.isfile(filename):
-            os.remove(filename)
-        
-        with open(filename, 'w') as f:
-            for i in range(self.N_x):
-                for ep in range(self.eval_points):
-                    q_eval = np.array([PP_q[k][i][ep] for k in range(self.N + 1)])
-                    v_eval = np.dot(self.sg.S, q_eval)
                     
-                    value = sum(v_eval[k]*v_eval[k] for k in range(1,self.N + 1))
-                    xx = x[i][ep]
-                    error=((1.0/2.0)+(np.cos(2.0*xx)*np.sin(2.0)/4.0)-(np.cos(xx)**2*np.sin(1.0)**2))-value
-                    #error = np.cos(xx + yy_cut) - value
-                    f.write(f"{xx} {error}\n")
+                    error_exp = np.cos(xx) * np.sin(1.0) - value_exp
+                    error_var = ((1.0 / 2.0) + (np.cos(2.0 * xx) * np.sin(2.0) / 4.0) - 
+                                 (np.cos(xx) ** 2 * np.sin(1.0) ** 2)) - value_var
+                    
+                    f_exp.write(f"{xx} {error_exp}\n")
+                    f_var.write(f"{xx} {error_var}\n")
         
         # T, Y = np.loadtxt(filename, unpack=True)
         # plt.figure(figsize=(8, 8))
@@ -272,7 +249,7 @@ class StochasticPP:
                 for ky in range(eval_point_at_y):
                     value = sum(v_eval[k] * self.chaos.chaos_basis_element(k, gpy[ky]) for k in range(self.N + 1))
                     error =self.exact_solution(xx,gpy[ky],self.T)- value
-                    cell_mean_sq_error+=error*error*half_dx*wp[ep]*wpy[ky]
+                    cell_mean_sq_error+=error*error*wp[ep]*wpy[ky]
             mn_square_error+=cell_mean_sq_error
         #Mean and VAR norm calculations,
         for i in range(self.N_x):
@@ -311,9 +288,10 @@ class StochasticPP:
 
         # Normalize and compute final L2 norms
         length = self.mesh.R - self.mesh.L
+        mn_square_error *= 0.5*half_dx
         mean_error_one /= length
         variation_error_one /= length
-        mean_error_two = np.sqrt(mean_error_two)
-        variation_error_two = np.sqrt(variation_error_two)
+        mean_error_two = np.sqrt(mean_error_two/length)
+        variation_error_two = np.sqrt(variation_error_two/length)
 
         return mn_square_error, mean_error_inf, variation_error_inf, mean_error_one, variation_error_one, mean_error_two, variation_error_two

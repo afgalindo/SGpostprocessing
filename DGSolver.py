@@ -15,9 +15,14 @@ class DGSolver:
         self.residual=Residual(mesh, basis,quadrature)
         # Define parameter
     #Computes dt in each time step.
-    def compute_dt(self,current_time, T):
+    def compute_dt(self,max_eigenvalue,current_time, T):
        cfl = 0.1  #CFL constant
-       dt = cfl * self.mesh.dx # define delta_t
+       dt=0.0
+       if max_eigenvalue == 0.0:
+           dt = cfl * self.mesh.dx # define delta_t
+       else:
+           dt=0.1*self.mesh.dx/max_eigenvalue
+
        if current_time + dt > T:
            dt = T - current_time
        return dt

@@ -80,20 +80,20 @@ def rho(y): #uniform distribution in \Omega=(-1.0,1.0)
 # Define discretization parameters. 
 # Discontinuous Galerkin method will be used to compute the coefficients(via solving a transport equation) of the chaos expansion. 
 # For phyisical 
-N_x=64  #Number of elements in the Galerkin discretization.
-dgr=2   #Degree of the piecewise polynomial basis. 
+N_x=64 #Number of elements in the Galerkin discretization.
+dgr=1   #Degree of the piecewise polynomial basis. 
 
 # For the chaos Galerkin expansion:
 N=8	#Number of basis elements in the chaos Expansion.  
 Number_Of_Quadrature_Points=3 #Quadrature points in physical space.
-Number_Of_Quadrature_Points_Random=8#int((N+1)/2)+1 #Quadrature points in random space.
+Number_Of_Quadrature_Points_Random=N+1 #8int((N+1)/2)+1 #Quadrature points in random space.
 #----------------------------------------------------------------------------------------------------------------------------
 
 def main():
      print(Number_Of_Quadrature_Points_Random)
      ell=dgr+1
      RS=dgr
-     T=1.0
+     T=1.0 #Final time of the simulation.
      eval_points=10 #Number of evaluation points for post-processing,ss
      basis=Basis(dgr)
      mesh=Mesh(N_x,x_left,x_right)
@@ -108,7 +108,7 @@ def main():
      
      spp=StochasticPP(mesh,basis,chaos,quadrature,sg,pp,eval_points,exact_solution,T)
      # Parameters for plotting
-     i_cut = 31#int((N_x/2)-1)
+     i_cut = 0#int((N_x/2)-1)
      ep_cut = 5
      #This is just to compute the exact x_cut 
      gp, wp= np.polynomial.legendre.leggauss(6)
@@ -120,6 +120,7 @@ def main():
      files = glob.glob('*.png')
      for file in files:
           os.remove(file)
+
      output.output(xx_cut,i_cut,yy_cut)
      spp.output(i_cut,ep_cut,yy_cut)
      output.plot_from_file(xx_cut,yy_cut)
