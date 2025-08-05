@@ -80,11 +80,11 @@ def rho(y): #uniform distribution in \Omega=(-1.0,1.0)
 # Define discretization parameters. 
 # Discontinuous Galerkin method will be used to compute the coefficients(via solving a transport equation) of the chaos expansion. 
 # For phyisical 
-N_x=64 #Number of elements in the Galerkin discretization.
-dgr=1   #Degree of the piecewise polynomial basis. 
+N_x=20 #Number of elements in the Galerkin discretization.
+dgr=2   #Degree of the piecewise polynomial basis. 
 
 # For the chaos Galerkin expansion:
-N=1	#Number of basis elements in the chaos Expansion.  
+N=5	#Number of basis elements in the chaos Expansion.  
 Number_Of_Quadrature_Points=3 #Quadrature points in physical space.
 Number_Of_Quadrature_Points_Random=N+1 #8int((N+1)/2)+1 #Quadrature points in random space.
 #----------------------------------------------------------------------------------------------------------------------------
@@ -92,7 +92,7 @@ Number_Of_Quadrature_Points_Random=N+1 #8int((N+1)/2)+1 #Quadrature points in ra
 def main():
      print(Number_Of_Quadrature_Points_Random)
      ell=dgr+1
-     RS=dgr
+     RS=3#dgr #2*RS+1 number of splines in the filtering.
      T=1.0 #Final time of the simulation.
      eval_points=10 #Number of evaluation points for post-processing,ss
      basis=Basis(dgr)

@@ -51,7 +51,7 @@ class SGSolver:
     def Initial_Condition(self,entry,xx):
         v_initial=self.chaos.Chaos_Galerkin_Projection(self.initial_data,xx)
         q_entry=0.0
-        for n in range(self.N_Chaos):
+        for n in range(self.N_Chaos+1):
             q_entry+=self.S_inv[entry][n]*v_initial[n]
         return q_entry
     
