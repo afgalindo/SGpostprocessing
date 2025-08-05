@@ -1,8 +1,0 @@
-#ignore 
-
-*.DS_Store
-__pycache__/
-
-*.txt
-
-*.png
