@@ -12,7 +12,7 @@ from DGSolver import DGSolver
 #For now we will just define it for the uniform distribution in the interval [-1,1]
 #i.e Normalized Legendre Polynomials. 
 class SGSolver:
-    def __init__(self,dg,chaos,Random_Coefficient,Initial_Data,Boundary_Value_Left,Boundary_Value_Right,T):
+    def __init__(self,dg,chaos,Random_Coefficient,Initial_Data,Boundary_Value_Left,Boundary_Value_Right,exact_solution,T):
         #DG objects
         self.dg=dg                              #Discontinuous Galerkin solver.
         self.N_x=self.dg.N_x                    #Number of elements in the physical space x.
@@ -28,6 +28,8 @@ class SGSolver:
         self.initial_data=Initial_Data          #Initial Data of the problem.  
         self.bvalue_left=Boundary_Value_Left    #Boundary Value Data of the problem on the left.           
         self.bvalue_right=Boundary_Value_Right  #Boundary Value Data of the problem on the right.           
+        self.exact_solution =exact_solution #Exact solution of the problem.
+        #Chaos coefficients
         self.Chaos_Coefficients=[]
         self.Create_Coefficients()
         self.S = np.zeros((self.N_Chaos+1, self.N_Chaos+1))  #Matrix S of the diagonalization SDS^(-1)=A with the coefficients of the system of PDE's dv/dt=A*dv/dx.
@@ -38,6 +40,8 @@ class SGSolver:
         self.t=[]
         self.mean_square=[]
         self.mean_max=[]
+        # Extend solution for postprocessing.
+        self.Chaos_Coefficients_Extended = []
 #Set up the PDE for the coefficients by creating S, and D.
     def Set_PDE(self):
         self.S, self.S_inv, self.D=self.chaos.initialize_Diagonalization(self.c)
@@ -52,6 +56,13 @@ class SGSolver:
         q_entry=0.0
         for n in range(self.N_Chaos+1):
             q_entry+=self.S_inv[entry][n]*v_initial[n]
+        return q_entry
+    
+    def Extended_Exact_Solution(self,entry,xx):
+        v_exact=self.chaos.Chaos_Galerkin_Projection(self.exact_solution,xx)
+        q_entry=0.0
+        for n in range(self.N_Chaos+1):
+            q_entry+=self.S_inv[entry][n]*v_exact[n]
         return q_entry
 #  Transforms the boundary data in polynomial chaos coefficients
     # On the left boundary point.
@@ -80,4 +91,15 @@ class SGSolver:
                 self.Chaos_Coefficients[entry]=self.dg.compute_RK(self.D[entry],self.Chaos_Coefficients[entry],bv_left[entry],bv_right[entry],dt)
             self.current_time+=dt
 
+# Extend Solution for postprocessing.
+    def Extend_Solution(self):
+
+
+        for entry in range(self.N_Chaos+1):
+            exact_entry_fixed = lambda xx, entry=entry: self.Extended_Exact_Solution(entry, xx)
+            # initialize a solution vector via L2 projection of the initial data.
+            extended_solution=self.dg.residual.L2_projection_extended(exact_entry_fixed)
+            #extended_solution[self.dg.ge:self.dg.N_x + self.dg.ge, :] = self.Chaos_Coefficients[entry]
+            # Store the extended solution.
+            self.Chaos_Coefficients_Extended.append(extended_solution)
     

@@ -8,6 +8,7 @@ from Residual import Residual
 class DGSolver:
     def __init__(self,mesh, basis,quadrature):
         self.mesh=mesh
+        self.ge = mesh.ge # number of ghost elements
         self.N_x=self.mesh.N_x
         self.basis=basis
         self.k=self.basis.degree

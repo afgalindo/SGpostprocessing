@@ -56,6 +56,9 @@ def exact_solution(x,y,t):
           value=np.sin(2.0*(x+c(y)*t)) #sin(2.0*\kappa*x)
      #value=np.sin(x+y*t)
      return value
+################################
+def exact_solution_final_time(x,y):
+     return exact_solution(x,y,0.0) #This is the solution at final time T=1.0
 #######################################
 #Define problem boundary conditions   #
 #######################################
@@ -89,13 +92,15 @@ def rho(y): #uniform distribution in \Omega=(-1.0,1.0)
 # Define discretization parameters. 
 # Discontinuous Galerkin method will be used to compute the coefficients(via solving a transport equation) of the chaos expansion. 
 # For phyisical 
-N_x=16  #Number of elements in the Galerkin discretization.
+N_x=100  #Number of elements in the Galerkin discretization.
 dgr=2   #Degree of the piecewise polynomial basis. 
 
 # For the chaos Galerkin expansion:
 N=21	#Number of basis elements in the chaos Expansion.  
 Number_Of_Quadrature_Points=3 #Quadrature points in physical space.
 Number_Of_Quadrature_Points_Random=14 #Quadrature points in random space.
+########################
+ghost_elements=2#Number of ghost elements in the mesh.
 #----------------------------------------------------------------------------------------------------------------------------
 
 def main():
@@ -103,18 +108,18 @@ def main():
     
      eval_points=6 #Number of evaluation points for post-processing,ss
      basis=Basis(dgr)
-     mesh=Mesh(N_x,x_left,x_right)
+     mesh=Mesh(N_x,x_left,x_right,ghost_elements)
      quadrature=Quadrature(Number_Of_Quadrature_Points)
-     T=1.0
+     T=0.0
      #residual=Residual(mesh,basis,quadrature)
      pp=Postprocessing(basis,mesh,eval_points)
      dg_solve=DGSolver(mesh,basis,quadrature)
      chaos=ChaosExpansion(rho,N,Number_Of_Quadrature_Points_Random)
-     sg=SGSolver(dg_solve,chaos,c,initial_condition,bv_left,bv_right,T)
+     sg=SGSolver(dg_solve,chaos,c,initial_condition,bv_left,bv_right,exact_solution_final_time,T)
      output=Output(sg,chaos,basis,mesh,exact_solution,T)
      sg.Solve_SG() 
-     
-     spp=StochasticPP(mesh,basis,chaos,quadrature,sg,pp,eval_points,exact_solution,T)
+     sg.Extend_Solution() # Extend the solution to include ghost elements.
+     # spp=StochasticPP(mesh,basis,chaos,quadrature,sg,pp,eval_points,exact_solution_final_time,T)
      # Parameters for plotting
      i_cut = 0#N_x-1#48#int((N_x/2)-1)
      ep_cut = 0
@@ -124,12 +129,14 @@ def main():
      ########################################
      yy_cut=0.5
      print("Removing all .png files from the folder.")
-     # Remove all .png files in the current directory
+     #Remove all .png files in the current directory
      files = glob.glob('*.png')
      for file in files:
           os.remove(file)
-     output.output(xx_cut,i_cut,yy_cut)
-     spp.output(i_cut,ep_cut,yy_cut)
+     
+     #output.output(xx_cut,i_cut,yy_cut)
+     output.output_extended(xx_cut,i_cut,yy_cut)
+     # spp.output(i_cut,ep_cut,yy_cut)
 
 if __name__ == "__main__":
     main()

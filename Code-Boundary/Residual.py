@@ -11,6 +11,7 @@ class Residual:
     def __init__(self,mesh, basis, quadrature): # Note that N_quad WILL NOT be used
         # Instances of the differente classes. 
         self.mesh=mesh
+        self.ge = mesh.ge # number of ghost elements
         self.basis=basis
         self.quadrature=quadrature
         self.N_elements=mesh.N_x  #Accesing Number of elements from the mesh instance.
@@ -35,6 +36,19 @@ class Residual:
 
         return Projected_f # return the solution matrix C
     
+    ###################################################### 
+    # L2 projection extended for the extended mesh with ghost elements.
+    def L2_projection_extended(self, function):
+        Projected_f = np.zeros((self.N_elements+2*self.ge, self.k+1))
+        for i in self.mesh.x_range:
+            for l in range(self.k+1):
+                coefficient = 0.0
+                for point in range(self.Number_Of_Quad_Points):
+                    xx=self.mesh.x_extended[i]+self.gp[point]*self.dx*0.5
+                    coefficient += function(xx) * self.basis.basis_at(l, self.gp[point]) * self.wp[point]
+                Projected_f[i][l] = coefficient
+        return Projected_f
+    ######################################################
     def Compute_Residual(self,advection_coefficient,bv_left,bv_right,u):
         dLu=np.zeros((self.N_elements,self.k+1))
         for i in range(self.N_elements):
