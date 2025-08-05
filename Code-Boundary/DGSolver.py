@@ -15,25 +15,20 @@ class DGSolver:
         self.residual=Residual(mesh, basis,quadrature)
         # Define parameter
     #Computes dt in each time step.
-    def compute_dt(self,max_eigenvalue,current_time, T):
+    def compute_dt(self,current_time, T):
        cfl = 0.1  #CFL constant
-       dt=0.0
-       if max_eigenvalue == 0.0:
-           dt = cfl * self.mesh.dx # define delta_t
-       else:
-           dt=0.1*self.mesh.dx/max_eigenvalue
-
+       dt = cfl * self.mesh.dx # define delta_t
        if current_time + dt > T:
            dt = T - current_time
        return dt
 
-    def compute_RK(self, advection_coefficient,u, dt): # runge-kutta
+    def compute_RK(self, advection_coefficient,u, bv_left,bv_right,dt): # runge-kutta
         #------------------------------------------------------------------
         # RK-step                                                         #
         #------------------------------------------------------------------
-        u1 =u + dt *self.residual.Compute_Residual(advection_coefficient,u)
-        u2 = 0.75*u + 0.25*u1 + 0.25*dt*self.residual.Compute_Residual(advection_coefficient,u1)
-        u_next = (1.0/3.0)*u + (2.0/3.0)*u2 + (2.0/3.0)*dt*self.residual.Compute_Residual(advection_coefficient,u2)  
+        u1 =u + dt *self.residual.Compute_Residual(advection_coefficient,bv_left,bv_right,u)
+        u2 = 0.75*u + 0.25*u1 + 0.25*dt*self.residual.Compute_Residual(advection_coefficient,bv_left,bv_right,u1)
+        u_next = (1.0/3.0)*u + (2.0/3.0)*u2 + (2.0/3.0)*dt*self.residual.Compute_Residual(advection_coefficient,bv_left,bv_right,u2)  
         u[:]=u_next
         return u
         

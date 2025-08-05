@@ -277,10 +277,10 @@ class Output:
         plt.plot(T, Y, label='Before postprocessing', color='blue')
         plt.plot(Tpp, Ypp, label='After postprocessing', linestyle='--', color='red')
         plt.xlabel('x')
-        plt.ylabel('Expectation')
-        plt.title('Expectation vs. Post-Processed Expectation')
+        plt.ylabel('error')
+        #plt.title('Expectation vs. Post-Processed Expectation')
         plt.legend()
-        plt.savefig('expectation.png')
+        plt.savefig('expectation.eps')
         plt.clf()  # Clear the current figure
 
         # Variation Plot
@@ -301,10 +301,10 @@ class Output:
         plt.plot(T_var, Y_var, label='Before postprocessing', color='blue')
         plt.plot(Tpp_var, Ypp_var, label='After postprocessing', linestyle='--', color='red')
         plt.xlabel('x')
-        plt.ylabel('Variation')
-        plt.title('Variation vs. Post-Processed Variation')
+        plt.ylabel('error')
+        #plt.title('Variation vs. Post-Processed Variation')
         plt.legend()
-        plt.savefig('variation.png')
+        plt.savefig('variation.eps')
 
     def compute_error_norm(self, chaos_coeff, eval_points):
         eval_point_at_y=int(0.5*self.N_Chaos+0.5)+1# Of Gauss Points for random y. 
