@@ -40,7 +40,8 @@ class Residual:
     # L2 projection extended for the extended mesh with ghost elements.
     def L2_projection_extended(self, function):
         Projected_f = np.zeros((self.N_elements+2*self.ge, self.k+1))
-        for i in self.mesh.x_range:
+        
+        for i in self.mesh.ghost_range:
             for l in range(self.k+1):
                 coefficient = 0.0
                 for point in range(self.Number_Of_Quad_Points):

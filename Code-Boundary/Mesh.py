@@ -9,5 +9,6 @@ class Mesh:
         # FOr the extended mesh with ghost elements:
         self.ge = ghost_elements # number of ghost elements
         self.x_range       = np.arange(self.N_x + 2*self.ge)
+        self.ghost_range   = list(range(self.ge))+list(range(self.N_x + self.ge, self.N_x + 2*self.ge))
         self.x_int_range   = np.arange(self.ge,self.N_x+self.ge)
         self.x_extended    = self.L + ((0.5-self.ge)+np.arange(self.N_x+2*self.ge))*self.dx

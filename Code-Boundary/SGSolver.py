@@ -99,7 +99,7 @@ class SGSolver:
             exact_entry_fixed = lambda xx, entry=entry: self.Extended_Exact_Solution(entry, xx)
             # initialize a solution vector via L2 projection of the initial data.
             extended_solution=self.dg.residual.L2_projection_extended(exact_entry_fixed)
-            #extended_solution[self.dg.ge:self.dg.N_x + self.dg.ge, :] = self.Chaos_Coefficients[entry]
+            extended_solution[self.dg.ge:self.dg.N_x + self.dg.ge, :] = self.Chaos_Coefficients[entry]
             # Store the extended solution.
             self.Chaos_Coefficients_Extended.append(extended_solution)
     
