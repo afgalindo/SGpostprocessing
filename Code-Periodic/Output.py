@@ -109,7 +109,7 @@ class Output:
                         value=0.0
                         q=np.zeros((self.N_Chaos+1))
                         v=np.zeros((self.N_Chaos+1))
-                        for k in range(self.N_Chaos):
+                        for k in range(self.N_Chaos+1):
                             q[k]=self.evaluate(chaos_coeff[k][i],points_x[kx])
                             
                         
@@ -132,7 +132,7 @@ class Output:
                 value=0.0
                 q=np.zeros((self.N_Chaos+1))
                 v=np.zeros((self.N_Chaos+1))
-                for k in range(self.N_Chaos):
+                for k in range(self.N_Chaos+1):
                     q[k]=self.evaluate(chaos_coeff[k][i_cut],norm_xx_cut)
                             
                 v=np.dot(self.S,q)

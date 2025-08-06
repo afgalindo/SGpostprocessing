@@ -32,20 +32,20 @@ from StochasticPP import StochasticPP
 #Define random transport velocity      #
 ########################################
 def c(y):
-     return 0.5*y #This data corresponds to periodic problem. See reference 
-     #return y
+#     return 0.5*y #This data corresponds to periodic problem. See reference 
+     return y
 
 ################################
 #Define problem exact solution #
 ################################
 def exact_solution(x,y,t):
-     value=0.0
-     if(y>=0.0):
-          value=np.sin(x+c(y)*t) #sin(\kappa*x) \kappa=0.5
-     else:
-          value=np.sin(2.0*(x+c(y)*t)) #sin(2.0*\kappa*x)
+     # value=0.0
+     # if(y>=0.0):
+     #      value=np.sin(x+c(y)*t) #sin(\kappa*x) \kappa=0.5
+     # else:
+     #      value=np.sin(2.0*(x+c(y)*t)) #sin(2.0*\kappa*x)
      #value=np.sin(x+y*t)
-     return value
+     return np.cos(x+y*t) #This is the exact solution at time t.
 ##############################
 #Define problem initial data.#
 ###############################
@@ -66,21 +66,23 @@ def exact_solution_final_time(x,y):
 # Right boundary value. x=1.          #
 #######################################
 def bv_right(y,t): # x=1, u(1,t,y)
-     value=np.sin(1+c(y)*t)
+     #value=np.sin(1+c(y)*t)
      #value=exact_solution(x_right,y,t)
-     return value
+     return np.cos(2.0*np.pi+c(y)*t)
 
 #######################################
 # Left boundary value. x=-1.          #
 #######################################
 def bv_left(y,t): # x=-1, u(-1,t,y)
-     value=np.sin(2.0*(-1.0+c(y)*t))
+     #value=np.sin(2.0*(-1.0+c(y)*t))
      #value=exact_solution(x_left,y,t)
-     return value 
+     return np.cos(0.0+c(y)*t) #This is the value at the left boundary x=-1.0
 
 #Physical space data x:
-x_left=-1.0 		#Left limit interval [x_left,x_right]. 
-x_right=1.0    	#Right limit interval [x_left,x_right].
+#x_left=-1.0 		#Left limit interval [x_left,x_right]. 
+#x_right=1.0    	#Right limit interval [x_left,x_right].
+x_left = 0.0 		#Left limit interval [x_left,x_right]. 
+x_right= 2.0*np.pi    	#Right limit interval [x_left,x_right].
 
 #Random variable y probabiliy space \Omega=(-1,1) with uniform probability distribution. 
 y_left=-1.0
@@ -93,11 +95,11 @@ def rho(y): #uniform distribution in \Omega=(-1.0,1.0)
 # Define discretization parameters. 
 # Discontinuous Galerkin method will be used to compute the coefficients(via solving a transport equation) of the chaos expansion. 
 # For phyisical 
-N_x=16  #Number of elements in the Galerkin discretization.
-dgr=2   #Degree of the piecewise polynomial basis. 
+N_x=20  #Number of elements in the Galerkin discretization.
+dgr=1   #Degree of the piecewise polynomial basis. 
 
 # For the chaos Galerkin expansion:
-N=40	#Number of basis elements in the chaos Expansion.  
+N=10	#Number of basis elements in the chaos Expansion.  
 Number_Of_Quadrature_Points=3 #Quadrature points in physical space.
 Number_Of_Quadrature_Points_Random=N+1 #Quadrature points in random space.
 ########################
@@ -120,7 +122,7 @@ def main():
      output=Output(sg,chaos,basis,mesh,exact_solution,T)
      sg.Solve_SG() 
      sg.Extend_Solution() # Extend the solution to include ghost elements.
-     # spp=StochasticPP(mesh,basis,chaos,quadrature,sg,pp,eval_points,exact_solution_final_time,T)
+     spp=StochasticPP(mesh,basis,chaos,quadrature,sg,pp,eval_points,exact_solution,T)
      # Parameters for plotting
      i_cut = 0#N_x-1#48#int((N_x/2)-1)
      ep_cut = 0
@@ -134,10 +136,12 @@ def main():
      files = glob.glob('*.png')
      for file in files:
           os.remove(file)
-     
-     #output.output(xx_cut,i_cut,yy_cut)
+
+     output.output(xx_cut,i_cut,yy_cut)
      output.output_extended(xx_cut,i_cut,yy_cut)
-     # spp.output(i_cut,ep_cut,yy_cut)
+     spp.output(i_cut,ep_cut,yy_cut)
+     output.plot_from_file(xx_cut,yy_cut)
+                           
 
 if __name__ == "__main__":
     main()

@@ -89,6 +89,7 @@ class SGSolver:
             bv_right=self.Compute_BV_right(self.current_time)
             for entry in range(self.N_Chaos+1):
                 self.Chaos_Coefficients[entry]=self.dg.compute_RK(self.D[entry],self.Chaos_Coefficients[entry],bv_left[entry],bv_right[entry],dt)
+            print(f"Time: {self.current_time:.2f}, dt: {dt:.4f}")
             self.current_time+=dt
 
 # Extend Solution for postprocessing.

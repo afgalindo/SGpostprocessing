@@ -16,6 +16,8 @@ class Postprocessing:
         self.dx= self.mesh.dx                   #Mesh size we are assuming uniform mesh.
         self.x_grid= self.mesh.x                # Mesh center nodes.
         self.p=self.basis.degree                #Degree of piecewise polynomial degree basis.
+        self.x_int_range = self.mesh.x_int_range  #Physical space internal range.
+        self.ge          = self.mesh.ge            #Number of ghost elements.
         self.eval_points=eval_points            #Number of evaluation points in each cell.
         #####################################################################################
         # Get quadrature points and weights for the evaluation points                       #
@@ -215,7 +217,7 @@ class Postprocessing:
     #This function will post-process the approximated DG solution,
     #One of the parameters are the DG coefficient matrix. 
 
-    def postprocess_solution(self,dg_solution):
+    def postprocess_solution(self,dg_solution_ext):
         
         PPfApprox = np.zeros((self.N_x, self.eval_points))
         #################################################################
@@ -261,47 +263,28 @@ class Postprocessing:
         symcc = self.symmetricpp_OhNo(ell,RS,self.zEval)
 
         PPfApprox=np.zeros((self.N_x,self.eval_points))
-        # Ghost cells for implementing reflection BC:
-        vhatL = np.zeros((kwide,self.p+1))
-        vhatR = np.zeros((kwide,self.p+1))
-        for m in range(self.p+1):
-            for nel in range(kwide):
-                vhatL[nel,m] = ((-1)**(m))*dg_solution[kwide-1-nel,m]
-                vhatR[nel,m] = ((-1)**(m))*dg_solution[self.N_x-kwide+nel,m]
+        # # Ghost cells for implementing reflection BC:
+        # vhatL = np.zeros((kwide,self.p+1))
+        # vhatR = np.zeros((kwide,self.p+1))
+        # for m in range(self.p+1):
+        #     for nel in range(kwide):
+        #         vhatL[nel,m] = ((-1)**(m))*dg_solution[kwide-1-nel,m]
+        #         vhatR[nel,m] = ((-1)**(m))*dg_solution[self.N_x-kwide+nel,m]
 
         # Calculate post-processed soluton over whole domain
-        for nel in range(self.N_x):
+        elem_count = 0
+#        for nel in range(self.N_x):
+        for nel in self.x_int_range:
+            #print(elem_count, 'of', self.N_x)
             upost = np.zeros(self.eval_points)
             for j in range(self.eval_points):
-                #Form post-processed solution
-                if kwide <= nel <= self.N_x-2-kwide:
-                    # Post-process interior elements
-                    for kk in range(2*kwide+1):
-                        for m in range(self.p+1):
-                            upost[j] = upost[j] + symcc[kk][m][j]*dg_solution[nel+kk-kwide][m]
-                elif nel < kwide:
-                    # Left boundary elements
-                    for kk in range(2*kwide+1):
-                        kk2 = kk-kwide
-                        for m in range(self.p+1):
-                            # reflection BC
-                            if nel+kk2 < 0:
-                                upost[j] = upost[j] + symcc[kk][m][j]*vhatL[nel+kk][m]
-                            else:
-                                upost[j] = upost[j] + symcc[kk][m][j]*dg_solution[nel+kk2][m] 
-                elif nel >= self.N_x-kwide-1:
-                    # Right boundary elements
-                    for kk in range(2*kwide+1):
-                        kk2 = kk-kwide
-                        for m in range(self.p+1):
-                        # periodic
-                            if nel+kk2<=self.N_x-1:
-                                upost[j] = upost[j]+symcc[kk][m][j]*dg_solution[nel+kk2][m]
-                            else:
-                                upost[j] = upost[j]+symcc[kk][m][j]*vhatR[kwide-(nel-self.N_x+kk2)-1][m]
-            
-            PPfApprox[nel,:] = upost[:]
-
+                # Post-process interior elements
+                for kk in range(2*kwide+1):
+                    for m in range(self.p+1):
+                        upost[j] = upost[j] + symcc[kk][m][j]*dg_solution_ext[nel+kk-kwide][m]
+            # Store the post-processed solution
+            PPfApprox[elem_count,:] = upost[:]
+            elem_count += 1
 
         return PPfApprox
 
