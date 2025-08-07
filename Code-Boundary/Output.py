@@ -313,7 +313,7 @@ class Output:
         plt.savefig('variation.png')
 
     def compute_error_norm(self, chaos_coeff, eval_points):
-        eval_point_at_y=int(0.5*self.N_Chaos+0.5)+1# Of Gauss Points for random y. 
+        eval_point_at_y=self.N_Chaos+1# Of Gauss Points for random y. 
         # Gauss-Legendre quadrature points and weights
         gp, wp = np.polynomial.legendre.leggauss(eval_points)
         gpy, wpy =np.polynomial.legendre.leggauss(eval_point_at_y)
@@ -513,7 +513,7 @@ class Output:
                     value=0.0
                     q=np.zeros((self.N_Chaos+1))
                     v=np.zeros((self.N_Chaos+1))
-                    for k in range(self.N_Chaos):
+                    for k in range(self.N_Chaos+1):
                         q[k]=self.evaluate(chaos_coeff_ext[k][i],points_x[kx])
                         v=np.dot(self.S,q)
 

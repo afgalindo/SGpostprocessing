@@ -226,7 +226,7 @@ class StochasticPP:
                     mean_error_two, variation_error_two)
         """
 
-        eval_point_at_y=int(0.5*self.N+0.5)+1# Of Gauss Points for random y. 
+        eval_point_at_y=self.N+1# Of Gauss Points for random y. 
         # Gauss-Legendre quadrature points and weights
         _, wp = np.polynomial.legendre.leggauss(self.eval_points)
         gpy, wpy =np.polynomial.legendre.leggauss(eval_point_at_y)
